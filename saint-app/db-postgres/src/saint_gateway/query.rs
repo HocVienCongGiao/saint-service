@@ -1,14 +1,15 @@
+use uuid::Uuid;
 use tokio_postgres::types::ToSql;
 use tokio_postgres::{Client, Error, Row};
 
-pub async fn find_one_by_name(client: &Client, name: String) -> Result<Row, Error> {
+pub async fn find_one_by_id(client: &Client, id: Uuid) -> Result<Row, Error> {
     let stmt = (*client)
-        .prepare("SELECT * FROM example__author_initial WHERE name = $1")
+        .prepare("SELECT * FROM saint__saint_view WHERE id = $1")
         .await
         .unwrap();
 
     // let stmt = block_on(stmt_future).unwrap();
-    let name_param: &[&(dyn ToSql + Sync)] = &[&name];
+    let name_param: &[&(dyn ToSql + Sync)] = &[&id];
     client.query_one(&stmt, name_param).await
 }
 

@@ -25,7 +25,7 @@ async fn integration_works() {
     let client = db_postgres::main(client).await.unwrap();
     let saint_repository = SaintRepository { client };
     let is_existing = saint_repository
-        .exists_by_name("Ngo Dinh Diem".to_string())
+        .exists_by_id("Ngo Dinh Diem".to_string())
         .await;
     println!("is existing is {}", is_existing);
     assert_eq!(2 + 2, 4);
@@ -46,7 +46,7 @@ async fn save_test() {
         .await;
     println!("Is insert successfully {}", result);
     let is_existing = saint_repository
-        .exists_by_name("NhutHuynh".to_string())
+        .exists_by_id("NhutHuynh".to_string())
         .await;
     println!("is existing NhutHuynh is {}", is_existing);
     println!("finished integration test");

@@ -8,8 +8,9 @@ pub mod interactors;
 
 #[cfg(test)]
 mod tests {
+    use uuid::Uuid;
     use crate::boundaries::{
-        SaintDbGateway, SaintMutationInputBoundary, SaintMutationRequest,
+        SaintDbGateway, SaintMutationInputBoundary, SaintMutationRequest, SaintDbResponse,
     };
     use async_trait::async_trait;
 
@@ -17,7 +18,7 @@ mod tests {
 
     #[async_trait]
     impl SaintDbGateway for SaintDbGatewayStub {
-        async fn exists_by_name(&self, name: String) -> bool {
+        async fn exists_by_id(&self, name: String) -> bool {
             if name == "existing" {
                 return true;
             }
@@ -25,6 +26,10 @@ mod tests {
         }
 
         async fn insert(&self, name: String, country: String) -> bool {
+            todo!()
+        }
+
+        async fn find_by_id(&self, id: Uuid) -> Option<SaintDbResponse> {
             todo!()
         }
     }
