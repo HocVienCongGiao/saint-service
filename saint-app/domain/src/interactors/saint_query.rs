@@ -11,24 +11,15 @@ impl<A> boundaries::SaintQueryInputBoundary for SaintQueryInteractor<A>
 where
     A: SaintDbGateway + Sync + Send,
 {
-    async fn get_saint(&self, request: SaintQueryRequest) -> SaintQueryResponse {
+    async fn get_saint(&self, request: SaintQueryRequest) -> Option<SaintQueryResponse> {
         println!("saint mutation input boundary {}", request.id);
 
         if let Some(db_response) = ((*self).db_gateway.find_by_id(request.id.clone())).await {
             println!("saint found");
-            return db_response.to_saint_query_response();
+            return Some(db_response.to_saint_query_response());
         } else {
             println!("saint not found");
-            return SaintQueryResponse {
-                id: None,
-                english_name: None,
-                french_name: None,
-                latin_name: None,
-                vietnamese_name: "Not found".to_string(),
-                display_name: "Not found".to_string(),
-                gender: "Not found".to_string(),
-                feast_day: "Not found".to_string(),
-            };
+            return None
         }
     }
 }

@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 #[async_trait]
 pub trait SaintQueryInputBoundary {
-    async fn get_saint(&self, request: SaintQueryRequest) -> SaintQueryResponse;
+    async fn get_saint(&self, request: SaintQueryRequest) -> Option<SaintQueryResponse>;
 }
 
 pub trait SaintMutationInputBoundary {
