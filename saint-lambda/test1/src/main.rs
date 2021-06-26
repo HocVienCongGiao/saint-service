@@ -11,17 +11,18 @@ async fn main() -> Result<(), Error> {
 
 async fn test1(_: Request, _: Context) -> Result<impl IntoResponse, Error> {
     // controller::openapi::test1::create_test1();
-    let pet = hvcg_example_openapi_entity::models::Pet {
+    let saint = hvcg_biography_openapi_saint::models::Saint {
         id: None,
-        category: None,
-        name: "123 Test1 Update".to_string(),
-        photo_urls: vec![],
-        tags: None,
-        status: None,
+        english_name: None,
+        french_name: None,
+        latin_name: None,
+        vietnamese_name: "Thánh Phêrô Tông đồ".to_string(),
+        gender: "male".to_string(),
+        feast_day: "29-6".to_string(),
     };
     // `serde_json::Values` impl `IntoResponse` by default
     // creating an application/json response
-    Ok(json!(pet))
+    Ok(json!(saint))
 }
 
 #[cfg(test)]
@@ -37,7 +38,7 @@ mod tests {
         // println!("hello {}", test.status);
         let request = Request::default();
         let expected = json!({
-        "name":"123 Test1 Update","photoUrls":[]
+            "vietnameseName": "Thánh Phêrô Tông đồ", "gender": "male", "feastDay": "29-6",
         })
         .into_response();
         let response = test1(request, Context::default())

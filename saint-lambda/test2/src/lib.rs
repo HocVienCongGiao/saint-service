@@ -72,7 +72,9 @@ pub async fn test2(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             "message": "Test 2 20210616 is me, how are you?"
         }
     );
-    let test1Response = controller::get_saint().await;
+
+    let id = uuid::Uuid::parse_str("40e6215db5c64896987cf30f3678f608").unwrap();
+    let test1Response = controller::get_saint(id).await.unwrap();
     let response: Response<Body> = Response::builder()
         .header(CONTENT_TYPE, "application/json")
         .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")

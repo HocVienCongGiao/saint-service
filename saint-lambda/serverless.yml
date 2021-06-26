@@ -27,8 +27,6 @@ functions:
     handler: test1
   test2:
     handler: test2
-  test3:
-    handler: test3
 
 #  hello:
 #    # handler value syntax is `{cargo-package-name}.{bin-name}`
@@ -80,7 +78,7 @@ custom:
     dockerTag: '0.4.0-rust-1.51.0'
     cargoFlags: ''
     dockerImage: 'peterbean/lambda-rust'
-# flags passed to 
+# flags passed to
      # cargo cargoFlags: '--features enable-awesome' # custom docker tag dockerTag: 'some-custom-tag' # custom docker image dockerImage: 'dockerUser/dockerRepo'
 
 
