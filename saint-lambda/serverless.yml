@@ -23,8 +23,6 @@ plugins:
   - serverless-rust
 
 functions:
-  test1:
-    handler: test1
   test2:
     handler: test2
 
