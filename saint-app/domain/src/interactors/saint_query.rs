@@ -1,5 +1,5 @@
 use crate::boundaries;
-use crate::boundaries::{SaintDbGateway, SaintQueryRequest, SaintQueryResponse, SaintDbResponse};
+use crate::boundaries::{SaintDbGateway, SaintDbResponse, SaintQueryRequest, SaintQueryResponse};
 use async_trait::async_trait;
 
 pub struct SaintQueryInteractor<A: SaintDbGateway> {
@@ -19,7 +19,7 @@ where
             return Some(db_response.to_saint_query_response());
         } else {
             println!("saint not found");
-            return None
+            return None;
         }
     }
 }
@@ -33,7 +33,6 @@ where
     }
 }
 
-
 impl SaintDbResponse {
     fn to_saint_query_response(&self) -> SaintQueryResponse {
         SaintQueryResponse {
@@ -43,8 +42,12 @@ impl SaintDbResponse {
             latin_name: self.latin_name.clone(),
             vietnamese_name: self.vietnamese_name.clone(),
             display_name: self.display_name.clone(),
-            gender: if self.is_male {"male".to_string()} else {"female".to_string()},
-            feast_day: format!("{:?}-{:?}",self.feast_day, self.feast_month),
+            gender: if self.is_male {
+                "male".to_string()
+            } else {
+                "female".to_string()
+            },
+            feast_day: format!("{:?}-{:?}", self.feast_day, self.feast_month),
         }
     }
 }

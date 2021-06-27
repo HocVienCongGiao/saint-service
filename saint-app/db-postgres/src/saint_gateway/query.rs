@@ -1,6 +1,6 @@
-use uuid::Uuid;
 use tokio_postgres::types::ToSql;
 use tokio_postgres::{Client, Error, Row};
+use uuid::Uuid;
 
 pub async fn find_one_by_id(client: &Client, id: Uuid) -> Result<Row, Error> {
     let stmt = (*client)

@@ -45,9 +45,7 @@ async fn save_test() {
         .insert("NhutHuynh".parse().unwrap(), "HK".parse().unwrap())
         .await;
     println!("Is insert successfully {}", result);
-    let is_existing = saint_repository
-        .exists_by_id("NhutHuynh".to_string())
-        .await;
+    let is_existing = saint_repository.exists_by_id("NhutHuynh".to_string()).await;
     println!("is existing NhutHuynh is {}", is_existing);
     println!("finished integration test");
     // let _ = pg.stop_db();

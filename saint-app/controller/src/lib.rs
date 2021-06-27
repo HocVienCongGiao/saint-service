@@ -11,9 +11,7 @@ pub async fn get_saint(id: Uuid) -> Option<openapi::saint::Saint> {
     let saint_repository = SaintRepository { client };
 
     let response = domain::interactors::saint_query::SaintQueryInteractor::new(saint_repository)
-        .get_saint(SaintQueryRequest {
-            id: id.clone(),
-        })
+        .get_saint(SaintQueryRequest { id: id.clone() })
         .await;
     if response.is_none() {
         return None;
@@ -21,10 +19,8 @@ pub async fn get_saint(id: Uuid) -> Option<openapi::saint::Saint> {
     Some(response.unwrap().to_openapi())
 }
 
-
 #[cfg(test)]
 mod tests {
-
     #[test]
     fn it_works() {
         assert_eq!(2 + 2, 4);

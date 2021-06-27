@@ -26,10 +26,26 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         let french_name: Option<String>;
         let latin_name: Option<String>;
 
-        if let Some(value) = row.get("id") {id = Some(value)} else {id = None};
-        if let Some(value) = row.get("english_name") {english_name = Some(value)} else {english_name = None};
-        if let Some(value) = row.get("french_name") {french_name = Some(value)} else {french_name = None};
-        if let Some(value) = row.get("latin_name") {latin_name = Some(value)} else {latin_name = None};
+        if let Some(value) = row.get("id") {
+            id = Some(value)
+        } else {
+            id = None
+        };
+        if let Some(value) = row.get("english_name") {
+            english_name = Some(value)
+        } else {
+            english_name = None
+        };
+        if let Some(value) = row.get("french_name") {
+            french_name = Some(value)
+        } else {
+            french_name = None
+        };
+        if let Some(value) = row.get("latin_name") {
+            latin_name = Some(value)
+        } else {
+            latin_name = None
+        };
         let vietnamese_name: String = row.get("vietnamese_name");
         let display_name: String = row.get("display_name");
         let is_male: bool = row.get("is_male");

@@ -8,11 +8,11 @@ pub mod interactors;
 
 #[cfg(test)]
 mod tests {
-    use uuid::Uuid;
     use crate::boundaries::{
-        SaintDbGateway, SaintMutationInputBoundary, SaintMutationRequest, SaintDbResponse,
+        SaintDbGateway, SaintDbResponse, SaintMutationInputBoundary, SaintMutationRequest,
     };
     use async_trait::async_trait;
+    use uuid::Uuid;
 
     struct SaintDbGatewayStub {}
 
@@ -36,10 +36,9 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let saint_mutator =
-            crate::interactors::saint_mutation::SaintMutationInteractor::new(Box::new(
-                SaintDbGatewayStub {},
-            ));
+        let saint_mutator = crate::interactors::saint_mutation::SaintMutationInteractor::new(
+            Box::new(SaintDbGatewayStub {}),
+        );
         saint_mutator.create_saint(SaintMutationRequest {
             name: "existing".to_string(),
         });
