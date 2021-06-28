@@ -8,7 +8,7 @@ use serde_json::json;
 
 type Error = Box<dyn std::error::Error + Sync + Send + 'static>;
 
-use saint::sasint;
+use saint::saint;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {

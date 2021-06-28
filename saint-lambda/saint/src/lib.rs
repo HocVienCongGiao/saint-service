@@ -86,6 +86,9 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                 .into(),
         )
         .expect("unable to build http::Response");
-    println!("saint response {:?}", serde_json::to_string(&saint_response));
+    println!(
+        "saint response {:?}",
+        serde_json::to_string(&saint_response)
+    );
     Ok(response)
 }
