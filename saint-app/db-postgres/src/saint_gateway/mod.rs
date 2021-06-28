@@ -64,13 +64,4 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             feast_month,
         })
     }
-
-    async fn insert(&self, name: String, country: String) -> bool {
-        let result = query::save(&(*self).client, name.clone(), country.clone()).await;
-        return if result.is_err() { false } else { true };
-    }
-
-    async fn exists_by_id(&self, name: String) -> bool {
-        todo!()
-    }
 }
