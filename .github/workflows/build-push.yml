@@ -115,7 +115,7 @@ jobs:
         working-directory: saint-lambda
         run: |
           cargo build --release --target x86_64-unknown-linux-musl
-          cp ./target/x86_64-unknown-linux-musl/release/test1 ./bootstrap && zip saint.zip bootstrap
+          cp ./target/x86_64-unknown-linux-musl/release/saint ./bootstrap && zip saint.zip bootstrap
 
           aws s3 cp ./saint.zip s3://891616054205-ap-southeast-1-aws-lambda/prod-sg-hocvienconggiao/${{ github.event.repository.name }}/latest/saint.zip
 
