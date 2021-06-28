@@ -9,19 +9,7 @@ pub struct SaintMutationInteractor {
 
 impl boundaries::SaintMutationInputBoundary for SaintMutationInteractor {
     fn create_saint(&self, request: SaintMutationRequest) -> SaintMutationResponse {
-        println!("saint mutation input boundary {}", request.name);
-        if block_on((*self).db_gateway.exists_by_id(request.name.clone())) {
-            println!("user with this name already exists");
-        } else {
-            println!("new user, all is good");
-            let saint = crate::entity::saint::Saint {
-                id: 0,
-                name: request.name,
-            };
-            if saint.is_valid() {
-                println!("This user is valid");
-            }
-        }
+        println!("saint mutation input boundary {}", request.id);
         SaintMutationResponse {}
     }
 }

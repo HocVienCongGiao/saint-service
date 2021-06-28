@@ -11,7 +11,7 @@ pub trait SaintMutationInputBoundary {
 }
 
 pub struct SaintMutationRequest {
-    pub name: String,
+    pub id: Uuid,
 }
 pub struct SaintQueryRequest {
     pub id: Uuid,
@@ -56,8 +56,6 @@ pub trait MutationOutputBoundary {}
 #[async_trait]
 pub trait SaintDbGateway {
     async fn find_by_id(&self, id: Uuid) -> Option<SaintDbResponse>;
-    async fn exists_by_id(&self, name: String) -> bool;
-    async fn insert(&self, name: String, country: String) -> bool;
 }
 
 // CommonUser
