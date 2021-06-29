@@ -5,6 +5,7 @@ on:
     branches:
       - development
       - production
+      - update
 env:
   CARGO_TERM_COLOR: always
 
@@ -44,7 +45,8 @@ jobs:
   # deploy on pushes to master branch
   # assumes aws credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) are set in github secrets
   push_development:
-    if: github.ref == 'refs/heads/development'
+    #if: github.ref == 'refs/heads/development'
+    if: github.ref == 'refs/heads/update'
     runs-on: ubuntu-latest
     env:
       TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
@@ -103,7 +105,8 @@ jobs:
           ./scripts/terraform-enterprise-push.sh saint-lambda/terraform HocVienCongGiao/dev-sg-lambda-services-hvcg-saint-service
 
   push_production:
-    if: github.ref == 'refs/heads/production'
+    #if: github.ref == 'refs/heads/production'
+    if: github.ref == 'refs/heads/update'
     runs-on: ubuntu-latest
     env:
       TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
