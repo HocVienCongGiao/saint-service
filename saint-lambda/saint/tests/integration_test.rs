@@ -36,7 +36,7 @@ async fn integration_works() {
     .into_response();*/
 
     let expected =
-            "{\"id\":\"40e6215d-b5c6-4896-987c-f30f3678f608\",\"englishName\":\"Peter the Apostle\",\"frenchName\":\"saint Pierre\",\"latinName\":\"Simon Petrus\",\"vietnameseName\":\"Thánh Phêrô Tông đồ\",\"gender\":\"male\",\"feastDay\":\"29-6\"}"
+            "{\"id\":\"40e6215d-b5c6-4896-987c-f30f3678f608\",\"displayName\":\"Phêrô\",\"englishName\":\"Peter the Apostle\",\"frenchName\":\"saint Pierre\",\"latinName\":\"Simon Petrus\",\"vietnameseName\":\"Thánh Phêrô Tông đồ\",\"gender\":\"male\",\"feastDay\":\"29-6\"}"
         .into_response();
 
     let response = saint::saint(request, Context::default())
