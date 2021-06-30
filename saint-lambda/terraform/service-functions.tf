@@ -29,7 +29,7 @@ module "saints_id" {
   file_name     = "saint"
   path_part     = "{id}"
   depends_on = [
-    module.example-service
+    module.saints
    ]
     
   environment = var.environment
