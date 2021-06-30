@@ -23,8 +23,8 @@ plugins:
   - serverless-rust
 
 functions:
-  test2:
-    handler: test2
+  saint:
+    handler: saint
 
 #  hello:
 #    # handler value syntax is `{cargo-package-name}.{bin-name}`

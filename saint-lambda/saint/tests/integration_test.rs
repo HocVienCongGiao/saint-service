@@ -4,8 +4,8 @@ use lambda_http::http::header::{
 };
 use lambda_http::http::HeaderValue;
 use lambda_http::{handler, lambda_runtime, Body, Context, IntoResponse, Request, Response};
+use saint::saint;
 use serde_json::json;
-use test2::test2;
 
 type Error = Box<dyn std::error::Error + Sync + Send + 'static>;
 
@@ -39,7 +39,7 @@ async fn integration_works() {
             "{\"id\":\"40e6215d-b5c6-4896-987c-f30f3678f608\",\"englishName\":\"Peter the Apostle\",\"frenchName\":\"saint Pierre\",\"latinName\":\"Simon Petrus\",\"vietnameseName\":\"Thánh Phêrô Tông đồ\",\"gender\":\"male\",\"feastDay\":\"29-6\"}"
         .into_response();
 
-    let response = test2::test2(request, Context::default())
+    let response = saint::saint(request, Context::default())
         .await
         .expect("expected Ok(_) value")
         .into_response();

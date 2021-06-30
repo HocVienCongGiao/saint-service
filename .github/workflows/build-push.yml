@@ -5,6 +5,7 @@ on:
     branches:
       - development
       - production
+      - update
 env:
   CARGO_TERM_COLOR: always
 
@@ -73,15 +74,34 @@ jobs:
       - name: Build and Push for Development
         working-directory: saint-lambda
         run: |
+          sudo apt install -y pkg-config libssl-dev
+          sudo ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/x86_64-linux-musl/asm
+          sudo ln -s /usr/include/asm-generic /usr/include/x86_64-linux-musl/asm-generic
+          sudo ln -s /usr/include/linux /usr/include/x86_64-linux-musl/linux
+          sudo mkdir /musl
+          sudo apt-get install wget
+          sudo wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1f.tar.gz
+          sudo tar zxvf OpenSSL_1_1_1f.tar.gz
+          cd openssl-OpenSSL_1_1_1f/
+          sudo CC="musl-gcc -fPIE -pie" ./Configure no-shared no-async --prefix=/musl --openssldir=/musl/ssl linux-x86_64
+          sudo apt-get install build-essential
+          sudo make depend
+          sudo make -j$(nproc)
+          sudo make install
+          export PKG_CONFIG_ALLOW_CROSS=1
+          export OPENSSL_STATIC=true
+          export OPENSSL_DIR=/musl
+          cd /home/runner/work/saint-service/saint-service/saint-lambda
           cargo build --release --target x86_64-unknown-linux-musl
           cp ./target/x86_64-unknown-linux-musl/release/saint ./bootstrap && zip saint.zip bootstrap
           rm bootstrap
           aws s3 cp ./saint.zip s3://891616054205-ap-southeast-1-aws-lambda/dev-sg-hocvienconggiao/${{ github.event.repository.name }}/latest/saint.zip
 
+
       - name: Deploy Terraform Config
         run: |
           chmod +x ./scripts/terraform-enterprise-push.sh
-          ./scripts/terraform-enterprise-push.sh lambda/terraform HocVienCongGiao/dev-sg-lambda-services-hvcg-saint-service
+          ./scripts/terraform-enterprise-push.sh saint-lambda/terraform HocVienCongGiao/dev-sg-lambda-services-hvcg-saint-service
 
   push_production:
     if: github.ref == 'refs/heads/production'
@@ -114,8 +134,26 @@ jobs:
       - name: Build and Push for Production
         working-directory: saint-lambda
         run: |
+          sudo apt install -y pkg-config libssl-dev
+          sudo ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/x86_64-linux-musl/asm
+          sudo ln -s /usr/include/asm-generic /usr/include/x86_64-linux-musl/asm-generic
+          sudo ln -s /usr/include/linux /usr/include/x86_64-linux-musl/linux
+          sudo mkdir /musl
+          sudo apt-get install wget
+          sudo wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1f.tar.gz
+          sudo tar zxvf OpenSSL_1_1_1f.tar.gz
+          cd openssl-OpenSSL_1_1_1f/
+          sudo CC="musl-gcc -fPIE -pie" ./Configure no-shared no-async --prefix=/musl --openssldir=/musl/ssl linux-x86_64
+          sudo apt-get install build-essential
+          sudo make depend
+          sudo make -j$(nproc)
+          sudo make install
+          export PKG_CONFIG_ALLOW_CROSS=1
+          export OPENSSL_STATIC=true
+          export OPENSSL_DIR=/musl
+          cd /home/runner/work/saint-service/saint-service/saint-lambda
           cargo build --release --target x86_64-unknown-linux-musl
-          cp ./target/x86_64-unknown-linux-musl/release/test1 ./bootstrap && zip saint.zip bootstrap
+          cp ./target/x86_64-unknown-linux-musl/release/saint ./bootstrap && zip saint.zip bootstrap
 
           aws s3 cp ./saint.zip s3://891616054205-ap-southeast-1-aws-lambda/prod-sg-hocvienconggiao/${{ github.event.repository.name }}/latest/saint.zip
 

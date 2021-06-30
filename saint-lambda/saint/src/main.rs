@@ -8,10 +8,10 @@ use serde_json::json;
 
 type Error = Box<dyn std::error::Error + Sync + Send + 'static>;
 
-use test2::test2;
+use saint::saint;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    lambda_runtime::run(handler(test2)).await?;
+    lambda_runtime::run(handler(saint)).await?;
     Ok(())
 }
