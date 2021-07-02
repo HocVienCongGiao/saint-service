@@ -3,7 +3,7 @@ use lambda_http::http::header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
     CONTENT_TYPE,
 };
-use lambda_http::http::{uri::Uri, HeaderValue};
+use lambda_http::http::{method, uri::Uri, HeaderValue};
 use lambda_http::{handler, Body, Context, IntoResponse, Request, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -52,6 +52,12 @@ pub fn get_id_from_uri(uri: &Uri) -> Option<uuid::Uuid> {
 }
 
 pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Error> {
+    if req.method() == method::Method::OPTIONS {
+        return Ok(Response::builder()
+            .body(Body::Empty)
+            .expect("unable to build http::Response"));
+    }
+
     // `serde_json::Values` impl `IntoResponse` by default
     let default_header_value = HeaderValue::from_str("Bearer eyJraWQiOiJaTGpneG41SStaZEpldnJRb0lpMTZEWEZoRHI4eG9UbVZ2b2ZuVm5vb3RFPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJmZDlhN2FmOC1mYTc2LTRiODYtYWYzZC1kOTYzNGVmNTIzNzQiLCJhdWQiOiIxcmF2NDExbmNjbnA3M2h0b3BiaG1sOHM2MSIsImNvZ25pdG86Z3JvdXBzIjpbIk9wZXJhdG9yR3JvdXAiXSwiZXZlbnRfaWQiOiI5NjQ1ZDYyMi0zZjRiLTQyYjctOWI0ZC03MWQzNWRhOTI1NmQiLCJ0b2tlbl91c2UiOiJpZCIsImF1dGhfdGltZSI6MTYyMzkzNDkyNiwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLmFwLXNvdXRoZWFzdC0xLmFtYXpvbmF3cy5jb21cL2FwLXNvdXRoZWFzdC0xXzlRV1NZR3pYayIsInBob25lX251bWJlcl92ZXJpZmllZCI6dHJ1ZSwiY29nbml0bzp1c2VybmFtZSI6ImRldi1vcGVyYXRvciIsInBob25lX251bWJlciI6Iis4NDM2OTE0MDkxNiIsImV4cCI6MTYyMzk0ODAwOCwiaWF0IjoxNjIzOTQ0NDA4fQ.ml3N8J7uw4rbQOneEdnmQW6OwsAY6ycmp5PIrKGZKF3yWQn0oQECIhF2Q_jjWOjWPikpUQEy5IKgghiJLukgKo7q-T4tUauPG3GJxoSGQkfVcglkNu8nZTu7ioxXzlQAWsXLakgkH40mGzI6kl2hkEhRQh_lWGrT7TqDP2yVTsDMKEGJBdtcb-kFCnYHfn9FMoCyVGo4K3tSrkeGno7bzwO_XpFtZRhv9Qs4OtfESXARYCP3St69hyf4JuAop6-Zb38FPWcp6rnpRG3BF64YPGqo0J0MAyWVz_Du7Pk3-H5uZqqrr6iHKoPwoabPPlZxJ3JGdifVt_I54SwTbelbzw").unwrap();
     let auth_header_value = req
@@ -61,7 +67,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
     let auth_header_str = auth_header_value.to_str().unwrap();
     let username: String;
     let groups: Vec<String>;
-    if (auth_header_str != "anonymous12") {
+    if auth_header_str != "anonymous12" {
         let jwt_token = &auth_header_str.to_string()[7..];
         let token_data: TokenData<TokenPayload> =
             jsonwebtoken::dangerous_insecure_decode(jwt_token).unwrap();
@@ -87,7 +93,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
 
     let saint_response: Option<controller::openapi::saint::Saint>;
     match *req.method() {
-        lambda_http::http::method::Method::GET => {
+        method::Method::GET => {
             if let Some(id) = get_id_from_uri(req.uri()) {
                 saint_response = controller::get_saint(id).await;
             } else {
@@ -104,6 +110,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
         .header(ACCESS_CONTROL_ALLOW_METHODS, "*")
+        .status(if saint_response == None { 404 } else { 200 })
         .body(
             serde_json::to_string(&saint_response)
                 .expect("unable to serialize serde_json::Value")
