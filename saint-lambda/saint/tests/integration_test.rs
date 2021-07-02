@@ -3,7 +3,7 @@ use lambda_http::http::header::{
     CONTENT_TYPE,
 };
 use lambda_http::http::HeaderValue;
-use lambda_http::{handler, lambda_runtime, Body, Context, IntoResponse, Request, Response};
+use lambda_http::{handler, http, lambda_runtime, Body, Context, IntoResponse, Request, Response};
 use saint::saint;
 use serde_json::json;
 
@@ -27,13 +27,13 @@ fn initialise() {
 async fn integration_works() {
     initialise();
     println!("is it working?");
-    let request = Request::default();
-    /*let expected = json!(
-        {"id":"40e6215d-b5c6-4896-987c-f30f3678f608","englishName":"Peter the Apostle",
-        "frenchName":"saint Pierre","latinName":"Simon Petrus","vietnameseName":"Thánh Phêrô Tông đồ",
-        "gender":"male","feastDay":"29-6"}
-    )
-    .into_response();*/
+
+    let request = http::Request::builder()
+        .uri("http://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints/40e6215d-b5c6-4896-987c-f30f3678f608")
+        .method("GET")
+        .header("Content-Type", "application/json")
+        .body(Body::Empty)
+        .unwrap();
 
     let expected =
             "{\"id\":\"40e6215d-b5c6-4896-987c-f30f3678f608\",\"displayName\":\"Phêrô\",\"englishName\":\"Peter the Apostle\",\"frenchName\":\"saint Pierre\",\"latinName\":\"Simon Petrus\",\"vietnameseName\":\"Thánh Phêrô Tông đồ\",\"gender\":\"male\",\"feastDay\":\"29-6\"}"
