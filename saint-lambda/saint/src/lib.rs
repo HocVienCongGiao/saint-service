@@ -54,6 +54,11 @@ pub fn get_id_from_uri(uri: &Uri) -> Option<uuid::Uuid> {
 pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Error> {
     if req.method() == method::Method::OPTIONS {
         return Ok(Response::builder()
+            .header(CONTENT_TYPE, "application/json")
+            .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+            .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
+            .header(ACCESS_CONTROL_ALLOW_METHODS, "*")
+            .status(200)
             .body(Body::Empty)
             .expect("unable to build http::Response"));
     }
