@@ -52,6 +52,9 @@ pub fn get_id_from_uri(uri: &Uri) -> Option<uuid::Uuid> {
 }
 
 pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Error> {
+    println!("Request {:?}", req);
+    println!("Request Method {:?}", req.method());        
+
     if req.method() == method::Method::OPTIONS {
         return Ok(Response::builder()
             .header(CONTENT_TYPE, "application/json")
