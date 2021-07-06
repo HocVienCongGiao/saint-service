@@ -13,7 +13,7 @@ pub(crate) async fn save_id(client: &Client, id: Uuid) -> Result<u64, Error> {
     client.execute(&stmt, params).await
 }
 
-pub async fn save_name(
+pub(crate) async fn save_name(
     client: &Client,
     id: Uuid,
     field_name: String,
