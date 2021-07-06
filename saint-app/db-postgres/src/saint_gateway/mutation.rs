@@ -40,7 +40,7 @@ pub async fn save_gender(client: &Client, id: Uuid, is_male: bool) -> Result<u64
     client.execute(&stmt, params).await
 }
 
-pub async fn save_feast_day(
+pub(crate) async fn save_feast_day(
     client: &Client,
     id: Uuid,
     feast_day: i16,
