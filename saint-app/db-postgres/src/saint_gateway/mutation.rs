@@ -2,7 +2,7 @@ use tokio_postgres::types::ToSql;
 use tokio_postgres::{Client, Error, Row};
 use uuid::Uuid;
 
-pub async fn save_id(client: &Client, id: Uuid) -> Result<u64, Error> {
+pub(crate) async fn save_id(client: &Client, id: Uuid) -> Result<u64, Error> {
     let stmt = (*client)
         .prepare("INSERT into public.saint__saint (id) VALUES ($1)")
         .await
