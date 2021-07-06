@@ -19,6 +19,11 @@ pub async fn get_saint(id: Uuid) -> Option<openapi::saint::Saint> {
     Some(response.unwrap().to_openapi())
 }
 
+pub async fn post_saint() {
+    let client = db_postgres::connect().await;
+    let saint_repository = SaintRepository { client };
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
