@@ -6,7 +6,8 @@ use lambda_http::http::header::{
 use lambda_http::http::{method, uri::Uri, HeaderValue};
 use lambda_http::{handler, Body, Context, IntoResponse, Request, Response};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
+use std::collections::HashMap;
 
 type Error = Box<dyn std::error::Error + Sync + Send + 'static>;
 
@@ -51,9 +52,78 @@ pub fn get_id_from_uri(uri: &Uri) -> Option<uuid::Uuid> {
     }
 }
 
+pub fn get_saint_from_request(req: Request) -> Option<HashMap<String, Option<String>>> {
+    let request_body = req.body();
+    match request_body {
+        Body::Text(data) => {
+            let saint_obj: Value =
+                serde_json::from_str(data).expect("unable to parse Json into serde_json::Value");
+            if !saint_obj.is_object() {
+                println!("Invalid input");
+                return None;
+            }
+            let mut map: HashMap<String, Option<String>> = HashMap::new();
+            map.insert(
+                "display_name".to_string(),
+                match saint_obj.get("displayName") {
+                    Some(Value::String(value)) => Some(value.clone()),
+                    _ => None,
+                },
+            );
+            map.insert(
+                "english_name".to_string(),
+                match saint_obj.get("englishName") {
+                    Some(Value::String(value)) => Some(value.clone()),
+                    _ => None,
+                },
+            );
+            map.insert(
+                "french_name".to_string(),
+                match saint_obj.get("frenchName") {
+                    Some(Value::String(value)) => Some(value.clone()),
+                    _ => None,
+                },
+            );
+            map.insert(
+                "latin_name".to_string(),
+                match saint_obj.get("latinName") {
+                    Some(Value::String(value)) => Some(value.clone()),
+                    _ => None,
+                },
+            );
+            map.insert(
+                "vietnamese_name".to_string(),
+                match saint_obj.get("vietnameseName") {
+                    Some(Value::String(value)) => Some(value.clone()),
+                    _ => None,
+                },
+            );
+            map.insert(
+                "gender".to_string(),
+                match saint_obj.get("gender") {
+                    Some(Value::String(value)) => Some(value.clone()),
+                    _ => None,
+                },
+            );
+            map.insert(
+                "feast_day".to_string(),
+                match saint_obj.get("feastDay") {
+                    Some(Value::String(value)) => Some(value.clone()),
+                    _ => None,
+                },
+            );
+            Some(map)
+        }
+        _ => {
+            println!("Invalid input");
+            None
+        }
+    }
+}
+
 pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Error> {
     println!("Request {:?}", req);
-    println!("Request Method {:?}", req.method());        
+    println!("Request Method {:?}", req.method());
 
     if req.method() == method::Method::OPTIONS {
         return Ok(Response::builder()
@@ -100,17 +170,39 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
     );
 
     let saint_response: Option<controller::openapi::saint::Saint>;
+    let status_code: u16;
     match *req.method() {
         method::Method::GET => {
             if let Some(id) = get_id_from_uri(req.uri()) {
                 saint_response = controller::get_saint(id).await;
+                if saint_response.is_none() {
+                    status_code = 404;
+                } else {
+                    status_code = 200;
+                }
             } else {
-                println!("id not found");
                 // get_saints();
                 saint_response = None;
+                status_code = 404;
             }
         }
-        _ => saint_response = None,
+        method::Method::POST => {
+            if let Some(saint_obj) = get_saint_from_request(req) {
+                saint_response = controller::create_saint(saint_obj).await;
+                if saint_response.is_none() {
+                    status_code = 405;
+                } else {
+                    status_code = 200;
+                }
+            } else {
+                saint_response = None;
+                status_code = 405;
+            }
+        }
+        _ => {
+            saint_response = None;
+            status_code = 404;
+        }
     }
 
     let response: Response<Body> = Response::builder()
@@ -118,7 +210,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
         .header(ACCESS_CONTROL_ALLOW_METHODS, "*")
-        .status(if saint_response == None { 404 } else { 200 })
+        .status(status_code)
         .body(
             serde_json::to_string(&saint_response)
                 .expect("unable to serialize serde_json::Value")
