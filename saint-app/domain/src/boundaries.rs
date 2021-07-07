@@ -6,8 +6,9 @@ pub trait SaintQueryInputBoundary {
     async fn get_saint(&self, request: SaintQueryRequest) -> Option<SaintQueryResponse>;
 }
 
+#[async_trait]
 pub trait SaintMutationInputBoundary {
-    fn create_saint(&self, request: SaintMutationRequest) -> Option<SaintMutationResponse>;
+    async fn create_saint(&self, request: SaintMutationRequest) -> Option<SaintMutationResponse>;
 }
 
 pub struct SaintMutationRequest {
@@ -35,7 +36,16 @@ pub struct SaintDbRequest {
     pub feast_month: Option<i16>,
 }
 
-pub struct SaintMutationResponse {}
+pub struct SaintMutationResponse {
+    pub id: Option<Uuid>,
+    pub display_name: String,
+    pub english_name: Option<String>,
+    pub french_name: Option<String>,
+    pub latin_name: Option<String>,
+    pub vietnamese_name: String,
+    pub gender: String,
+    pub feast_day: String,
+}
 pub struct SaintQueryResponse {
     pub id: Option<Uuid>,
     pub display_name: String,

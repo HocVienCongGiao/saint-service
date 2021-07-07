@@ -29,7 +29,7 @@ pub(crate) async fn save_name(
     client.execute(&stmt, params).await
 }
 
-pub async fn save_gender(client: &Client, id: Uuid, is_male: bool) -> Result<u64, Error> {
+pub(crate) async fn save_gender(client: &Client, id: Uuid, is_male: bool) -> Result<u64, Error> {
     let stmt = (*client)
         .prepare("INSERT into public.saint__saint_gender (id, is_male) VALUES ($1, $2)")
         .await
