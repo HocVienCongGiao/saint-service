@@ -14,9 +14,13 @@ pub(crate) struct Saint {
 impl Saint {
     pub(crate) fn is_valid(&self) -> bool {
         println!("checking if saint is valid");
-        self.display_name.is_some()
-            && self.vietnamese_name.is_some()
-            && self.feast_day.is_some()
-            && self.gender.is_some()
+        if let Some(gender) = &self.gender {
+            if gender.ne("MALE") && gender.ne("FEMALE") {
+                return false;
+            }
+        } else {
+            return false;
+        }
+        self.display_name.is_some() && self.vietnamese_name.is_some() && self.feast_day.is_some()
     }
 }

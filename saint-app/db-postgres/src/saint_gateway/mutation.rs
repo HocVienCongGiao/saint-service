@@ -19,13 +19,14 @@ pub(crate) async fn save_name(
     field_name: String,
     value: String,
 ) -> Result<u64, Error> {
-    let stmt = (*client)
-        .prepare("INSERT into public.saint__saint_$1 (id, $1) VALUES ($2, $3)")
-        .await
-        .unwrap();
+    let statement = format!(
+        "INSERT into public.saint__saint_{} (id, {}) VALUES ($1, $2)",
+        field_name, field_name
+    );
+    let stmt = (*client).prepare(&statement).await.unwrap();
 
     // let stmt = block_on(stmt_future).unwrap();
-    let params: &[&(dyn ToSql + Sync)] = &[&field_name, &id, &value];
+    let params: &[&(dyn ToSql + Sync)] = &[&id, &value];
     client.execute(&stmt, params).await
 }
 
@@ -47,7 +48,7 @@ pub(crate) async fn save_feast_day(
     feast_month: i16,
 ) -> Result<u64, Error> {
     let stmt = (*client)
-        .prepare("public.saint__saint_feast_day (id, feast_day, feast_month) VALUES ($1, $2, $3)")
+        .prepare("INSERT into public.saint__saint_feast_day (id, feast_day, feast_month) VALUES ($1, $2, $3)")
         .await
         .unwrap();
 

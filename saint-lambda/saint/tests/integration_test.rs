@@ -45,3 +45,43 @@ async fn integration_works() {
         .into_response();
     assert_eq!(response.body(), expected.body())
 }
+
+#[tokio::test]
+async fn save_test() {
+    initialise();
+    println!("is it working?");
+
+    let request = http::Request::builder()
+        .uri("https://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saints")
+        .method("POST")
+        .header("Content-Type", "application/json")
+        .body(Body::from(
+            "
+            {
+                \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",
+                \"displayName\": \"Anrê\",
+                \"vietnameseName\": \"Anrê\",
+                \"gender\": \"MALE\",
+                \"feastDay\": \"31-12\"
+            }
+        ",
+        ))
+        .unwrap();
+
+    let expected: Response<Body> = /*http::status::StatusCode::from_u16(200).unwrap()*/
+        Response::builder()
+            .header(CONTENT_TYPE, "application/json")
+            .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+            .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
+            .header(ACCESS_CONTROL_ALLOW_METHODS, "*")
+            .status(200)
+            .body(Body::Empty)
+            .expect("unable to build http::Response")
+        .into_response();
+
+    let response = saint::saint(request, Context::default())
+        .await
+        .expect("expected Ok(_) value")
+        .into_response();
+    assert_eq!(response.status(), expected.status())
+}

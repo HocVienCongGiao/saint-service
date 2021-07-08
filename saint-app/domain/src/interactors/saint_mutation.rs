@@ -16,7 +16,7 @@ where
     A: SaintDbGateway + Sync + Send,
 {
     async fn create_saint(&self, request: SaintMutationRequest) -> Option<SaintMutationResponse> {
-        println!("saint mutation input boundary {}", request.id.unwrap());
+        println!("saint mutation input boundary");
         let mut id: Uuid = Uuid::new_v4();
         let mut id_is_valid: bool = false;
         for _ in 0..5 {
@@ -40,7 +40,11 @@ where
             french_name: request.french_name,
             latin_name: request.latin_name,
             vietnamese_name: request.vietnamese_name,
-            gender: request.gender,
+            gender: if let Some(string) = request.gender {
+                Some(string.to_uppercase())
+            } else {
+                None
+            },
             feast_day: request.feast_day,
         };
         if saint.is_valid() {
@@ -77,7 +81,7 @@ impl crate::entity::saint::Saint {
             latin_name: self.latin_name.clone(),
             vietnamese_name: self.vietnamese_name.clone(),
             display_name: self.display_name.clone(),
-            is_male: if self.gender.as_ref().unwrap().eq("male") {
+            is_male: if self.gender.as_ref().unwrap().eq("MALE") {
                 Some(true)
             } else {
                 Some(false)
