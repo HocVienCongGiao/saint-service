@@ -4,6 +4,7 @@ use domain::boundaries::{
     SaintDbGateway, SaintMutationInputBoundary, SaintMutationRequest, SaintQueryInputBoundary,
     SaintQueryRequest,
 };
+pub use hvcg_biography_openapi_saint::models::Saint;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -23,9 +24,7 @@ pub async fn get_saint(id: Uuid) -> Option<openapi::saint::Saint> {
     Some(response.unwrap().to_openapi())
 }
 
-pub async fn create_saint(
-    saint_obj: HashMap<String, Option<String>>,
-) -> Option<openapi::saint::Saint> {
+pub async fn create_saint(saint: &Saint) -> Option<openapi::saint::Saint> {
     let client = db_postgres::connect().await;
 
     let saint_repository = SaintRepository { client };
@@ -34,13 +33,13 @@ pub async fn create_saint(
         domain::interactors::saint_mutation::SaintMutationInteractor::new(saint_repository)
             .create_saint(SaintMutationRequest {
                 id: None,
-                display_name: saint_obj.get("display_name").unwrap().clone(),
-                english_name: saint_obj.get("english_name").unwrap().clone(),
-                french_name: saint_obj.get("french_name").unwrap().clone(),
-                latin_name: saint_obj.get("latin_name").unwrap().clone(),
-                vietnamese_name: saint_obj.get("vietnamese_name").unwrap().clone(),
-                gender: saint_obj.get("gender").unwrap().clone(),
-                feast_day: saint_obj.get("feast_day").unwrap().clone(),
+                display_name: Some(saint.display_name.clone()),
+                english_name: saint.english_name.clone(),
+                french_name: saint.french_name.clone(),
+                latin_name: saint.latin_name.clone(),
+                vietnamese_name: Some(saint.vietnamese_name.clone()),
+                gender: Some(saint.gender.clone()),
+                feast_day: Some(saint.feast_day.clone()),
             })
             .await;
     if response.is_none() {

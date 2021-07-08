@@ -1,13 +1,13 @@
+use hvcg_biography_openapi_saint::models::Saint;
 use jsonwebtoken::TokenData;
 use lambda_http::http::header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
     CONTENT_TYPE,
 };
 use lambda_http::http::{method, uri::Uri, HeaderValue};
-use lambda_http::{handler, Body, Context, IntoResponse, Request, Response};
+use lambda_http::{handler, Body, Context, IntoResponse, Request, RequestExt, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
 
 type Error = Box<dyn std::error::Error + Sync + Send + 'static>;
 
@@ -49,75 +49,6 @@ pub fn get_id_from_uri(uri: &Uri) -> Option<uuid::Uuid> {
     } else {
         println!("id not found");
         None
-    }
-}
-
-pub fn get_saint_from_request(req: Request) -> Option<HashMap<String, Option<String>>> {
-    let request_body = req.body();
-    match request_body {
-        Body::Text(data) => {
-            let saint_obj: Value =
-                serde_json::from_str(data).expect("unable to parse Json into serde_json::Value");
-            if !saint_obj.is_object() {
-                println!("Invalid input");
-                return None;
-            }
-            let mut map: HashMap<String, Option<String>> = HashMap::new();
-            map.insert(
-                "display_name".to_string(),
-                match saint_obj.get("displayName") {
-                    Some(Value::String(value)) => Some(value.clone()),
-                    _ => None,
-                },
-            );
-            map.insert(
-                "english_name".to_string(),
-                match saint_obj.get("englishName") {
-                    Some(Value::String(value)) => Some(value.clone()),
-                    _ => None,
-                },
-            );
-            map.insert(
-                "french_name".to_string(),
-                match saint_obj.get("frenchName") {
-                    Some(Value::String(value)) => Some(value.clone()),
-                    _ => None,
-                },
-            );
-            map.insert(
-                "latin_name".to_string(),
-                match saint_obj.get("latinName") {
-                    Some(Value::String(value)) => Some(value.clone()),
-                    _ => None,
-                },
-            );
-            map.insert(
-                "vietnamese_name".to_string(),
-                match saint_obj.get("vietnameseName") {
-                    Some(Value::String(value)) => Some(value.clone()),
-                    _ => None,
-                },
-            );
-            map.insert(
-                "gender".to_string(),
-                match saint_obj.get("gender") {
-                    Some(Value::String(value)) => Some(value.clone()),
-                    _ => None,
-                },
-            );
-            map.insert(
-                "feast_day".to_string(),
-                match saint_obj.get("feastDay") {
-                    Some(Value::String(value)) => Some(value.clone()),
-                    _ => None,
-                },
-            );
-            Some(map)
-        }
-        _ => {
-            println!("Invalid input");
-            None
-        }
     }
 }
 
@@ -187,16 +118,19 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         method::Method::POST => {
-            if let Some(saint_obj) = get_saint_from_request(req) {
-                saint_response = controller::create_saint(saint_obj).await;
+            if let Some(value) = req.payload().unwrap_or_else(|_parse_err| None) {
+                let lambda_saint_request: Saint = value;
+                let serialized_saint = serde_json::to_string(&lambda_saint_request).unwrap();
+                println!("saint_obj: {}", serialized_saint);
+                saint_response = controller::create_saint(&lambda_saint_request).await;
                 if saint_response.is_none() {
-                    status_code = 405;
+                    status_code = 500;
                 } else {
                     status_code = 200;
                 }
             } else {
                 saint_response = None;
-                status_code = 405;
+                status_code = 400;
             }
         }
         _ => {
