@@ -118,7 +118,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         method::Method::POST => {
-            if let Some(value) = req.payload().unwrap_or_else(|_parse_err| None) {
+            if let Some(value) = req.payload().unwrap_or(None) {
                 let lambda_saint_request: Saint = value;
                 let serialized_saint = serde_json::to_string(&lambda_saint_request).unwrap();
                 println!("saint_obj: {}", serialized_saint);
