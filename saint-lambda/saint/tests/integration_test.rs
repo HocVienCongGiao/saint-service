@@ -1,3 +1,4 @@
+use hvcg_biography_openapi_saint::models::Saint;
 use lambda_http::http::header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
     CONTENT_TYPE,
@@ -51,21 +52,24 @@ async fn save_test() {
     initialise();
     println!("is it working?");
 
+    let saint_request = Saint {
+        id: None,
+        display_name: "Anrê".to_string(),
+        english_name: None,
+        french_name: None,
+        latin_name: None,
+        vietnamese_name: "Anrê".to_string(),
+        gender: "MALE".to_string(),
+        feast_day: "31-12".to_string(),
+    };
+
+    let serialized_saint = serde_json::to_string(&saint_request).unwrap();
+
     let request = http::Request::builder()
         .uri("https://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saints")
         .method("POST")
         .header("Content-Type", "application/json")
-        .body(Body::from(
-            "
-            {
-                \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",
-                \"displayName\": \"Anrê\",
-                \"vietnameseName\": \"Anrê\",
-                \"gender\": \"MALE\",
-                \"feastDay\": \"31-12\"
-            }
-        ",
-        ))
+        .body(Body::from(serialized_saint))
         .unwrap();
 
     let expected: Response<Body> = /*http::status::StatusCode::from_u16(200).unwrap()*/
@@ -83,5 +87,12 @@ async fn save_test() {
         .await
         .expect("expected Ok(_) value")
         .into_response();
-    assert_eq!(response.status(), expected.status())
+
+    assert_eq!(response.status(), expected.status());
+
+    if let Body::Text(saint_obj) = response.body() {
+        let deserialized_saint: Saint =
+            serde_json::from_str(saint_obj).expect("Unable deserialise response body");
+        assert_eq!(deserialized_saint.display_name, "Anrê".to_string());
+    }
 }
