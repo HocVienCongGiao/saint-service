@@ -90,9 +90,32 @@ async fn save_test() {
 
     assert_eq!(response.status(), expected.status());
 
+    let empty_saint = Saint {
+        id: None,
+        display_name: "".to_string(),
+        english_name: None,
+        french_name: None,
+        latin_name: None,
+        vietnamese_name: "".to_string(),
+        gender: "".to_string(),
+        feast_day: "".to_string(),
+    };
+    let deserialized_saint: Saint;
     if let Body::Text(saint_obj) = response.body() {
-        let deserialized_saint: Saint =
+        deserialized_saint =
             serde_json::from_str(saint_obj).expect("Unable deserialise response body");
-        assert_eq!(deserialized_saint.display_name, "Anrê".to_string());
+    } else {
+        deserialized_saint = empty_saint;
     }
+    let expected_saint = Saint {
+        id: deserialized_saint.id.clone(),
+        display_name: "Anrê".to_string(),
+        english_name: None,
+        french_name: None,
+        latin_name: None,
+        vietnamese_name: "Anrê".to_string(),
+        gender: "MALE".to_string(),
+        feast_day: "31-12".to_string(),
+    };
+    assert_eq!(deserialized_saint, expected_saint);
 }
