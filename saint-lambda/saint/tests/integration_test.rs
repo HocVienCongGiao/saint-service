@@ -108,7 +108,7 @@ async fn save_test() {
         deserialized_saint = empty_saint;
     }
     let expected_saint = Saint {
-        id: deserialized_saint.id.clone(),
+        id: deserialized_saint.id,
         display_name: "Anrê".to_string(),
         english_name: None,
         french_name: None,
