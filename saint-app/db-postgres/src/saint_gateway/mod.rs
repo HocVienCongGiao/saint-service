@@ -1,11 +1,11 @@
 use async_trait::async_trait;
-use tokio_postgres::Client;
+use tokio_postgres::{Client, Error};
 use uuid::Uuid;
 
 mod mutation;
 mod query;
 
-use domain::boundaries::SaintDbResponse;
+use domain::boundaries::{SaintDbRequest, SaintDbResponse};
 
 pub struct SaintRepository {
     pub client: Client,
@@ -63,5 +63,106 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             feast_day,
             feast_month,
         })
+    }
+
+    async fn exists_by_id(&self, id: Uuid) -> bool {
+        let result = query::find_one_by_id(&(*self).client, id.clone()).await;
+        println!("second block_on for row");
+        if result.is_err() {
+            return false;
+        }
+        let row = result.unwrap();
+        let id_found: Option<Uuid> = row.get("id");
+        println!("ROW IS {}", id);
+        if id_found.is_none() {
+            return false;
+        }
+        id_found.unwrap() == id
+    }
+
+    async fn insert(&self, db_request: SaintDbRequest) -> bool {
+        let mut result: Result<u64, Error>;
+
+        let id = db_request.id.unwrap();
+        result = mutation::save_id(&(*self).client, id.clone()).await;
+        if result.is_err() {
+            return false;
+        }
+        let display_name = db_request.display_name.unwrap();
+        result = mutation::save_name(
+            &(*self).client,
+            id.clone(),
+            "display_name".to_string(),
+            display_name.clone(),
+        )
+        .await;
+        if result.is_err() {
+            return false;
+        }
+        if let Some(english_name) = db_request.english_name {
+            result = mutation::save_name(
+                &(*self).client,
+                id.clone(),
+                "english_name".to_string(),
+                english_name.clone(),
+            )
+            .await;
+            if result.is_err() {
+                return false;
+            }
+        }
+        if let Some(french_name) = db_request.french_name {
+            result = mutation::save_name(
+                &(*self).client,
+                id.clone(),
+                "french_name".to_string(),
+                french_name.clone(),
+            )
+            .await;
+            if result.is_err() {
+                return false;
+            }
+        }
+        if let Some(latin_name) = db_request.latin_name {
+            result = mutation::save_name(
+                &(*self).client,
+                id.clone(),
+                "latin_name".to_string(),
+                latin_name.clone(),
+            )
+            .await;
+            if result.is_err() {
+                return false;
+            }
+        }
+        let vietnamese_name = db_request.vietnamese_name.unwrap();
+        result = mutation::save_name(
+            &(*self).client,
+            id.clone(),
+            "vietnamese_name".to_string(),
+            vietnamese_name.clone(),
+        )
+        .await;
+        if result.is_err() {
+            return false;
+        }
+        let is_male = db_request.is_male.unwrap();
+        result = mutation::save_gender(&(*self).client, id.clone(), is_male.clone()).await;
+        if result.is_err() {
+            return false;
+        }
+        let feast_day = db_request.feast_day.unwrap();
+        let feast_month = db_request.feast_month.unwrap();
+        result = mutation::save_feast_day(
+            &(*self).client,
+            id.clone(),
+            feast_day.clone(),
+            feast_month.clone(),
+        )
+        .await;
+        if result.is_err() {
+            return false;
+        }
+        true
     }
 }

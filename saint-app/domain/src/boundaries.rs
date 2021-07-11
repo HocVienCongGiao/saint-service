@@ -6,12 +6,20 @@ pub trait SaintQueryInputBoundary {
     async fn get_saint(&self, request: SaintQueryRequest) -> Option<SaintQueryResponse>;
 }
 
+#[async_trait]
 pub trait SaintMutationInputBoundary {
-    fn create_saint(&self, request: SaintMutationRequest) -> SaintMutationResponse;
+    async fn create_saint(&self, request: SaintMutationRequest) -> Option<SaintMutationResponse>;
 }
 
 pub struct SaintMutationRequest {
-    pub id: Uuid,
+    pub id: Option<Uuid>,
+    pub display_name: Option<String>,
+    pub english_name: Option<String>,
+    pub french_name: Option<String>,
+    pub latin_name: Option<String>,
+    pub vietnamese_name: Option<String>,
+    pub gender: Option<String>,
+    pub feast_day: Option<String>,
 }
 pub struct SaintQueryRequest {
     pub id: Uuid,
@@ -28,7 +36,16 @@ pub struct SaintDbRequest {
     pub feast_month: Option<i16>,
 }
 
-pub struct SaintMutationResponse {}
+pub struct SaintMutationResponse {
+    pub id: Option<Uuid>,
+    pub display_name: String,
+    pub english_name: Option<String>,
+    pub french_name: Option<String>,
+    pub latin_name: Option<String>,
+    pub vietnamese_name: String,
+    pub gender: String,
+    pub feast_day: String,
+}
 pub struct SaintQueryResponse {
     pub id: Option<Uuid>,
     pub display_name: String,
@@ -56,6 +73,8 @@ pub trait MutationOutputBoundary {}
 #[async_trait]
 pub trait SaintDbGateway {
     async fn find_by_id(&self, id: Uuid) -> Option<SaintDbResponse>;
+    async fn exists_by_id(&self, id: Uuid) -> bool;
+    async fn insert(&self, db_request: SaintDbRequest) -> bool;
 }
 
 // CommonUser

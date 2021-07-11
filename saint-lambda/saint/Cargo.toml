@@ -14,6 +14,7 @@ controller = { path = "../../saint-app/controller" }
 jsonwebtoken = "7.2.0"
 serde = { version = "1.0", features = ["derive"] }
 uuid = "0.8"
+hvcg_biography_openapi_saint = "0.3.4"
 
 [dev-dependencies]
 dotenv = "0.15.0"

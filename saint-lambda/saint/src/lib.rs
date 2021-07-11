@@ -1,12 +1,13 @@
+use hvcg_biography_openapi_saint::models::Saint;
 use jsonwebtoken::TokenData;
 use lambda_http::http::header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
     CONTENT_TYPE,
 };
 use lambda_http::http::{method, uri::Uri, HeaderValue};
-use lambda_http::{handler, Body, Context, IntoResponse, Request, Response};
+use lambda_http::{handler, Body, Context, IntoResponse, Request, RequestExt, Response};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
 
 type Error = Box<dyn std::error::Error + Sync + Send + 'static>;
 
@@ -53,7 +54,7 @@ pub fn get_id_from_uri(uri: &Uri) -> Option<uuid::Uuid> {
 
 pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Error> {
     println!("Request {:?}", req);
-    println!("Request Method {:?}", req.method());        
+    println!("Request Method {:?}", req.method());
 
     if req.method() == method::Method::OPTIONS {
         return Ok(Response::builder()
@@ -100,17 +101,42 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
     );
 
     let saint_response: Option<controller::openapi::saint::Saint>;
+    let status_code: u16;
     match *req.method() {
         method::Method::GET => {
             if let Some(id) = get_id_from_uri(req.uri()) {
                 saint_response = controller::get_saint(id).await;
+                if saint_response.is_none() {
+                    status_code = 404;
+                } else {
+                    status_code = 200;
+                }
             } else {
-                println!("id not found");
                 // get_saints();
                 saint_response = None;
+                status_code = 404;
             }
         }
-        _ => saint_response = None,
+        method::Method::POST => {
+            if let Some(value) = req.payload().unwrap_or(None) {
+                let lambda_saint_request: Saint = value;
+                let serialized_saint = serde_json::to_string(&lambda_saint_request).unwrap();
+                println!("saint_obj: {}", serialized_saint);
+                saint_response = controller::create_saint(&lambda_saint_request).await;
+                if saint_response.is_none() {
+                    status_code = 500;
+                } else {
+                    status_code = 200;
+                }
+            } else {
+                saint_response = None;
+                status_code = 400;
+            }
+        }
+        _ => {
+            saint_response = None;
+            status_code = 404;
+        }
     }
 
     let response: Response<Body> = Response::builder()
@@ -118,7 +144,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
         .header(ACCESS_CONTROL_ALLOW_METHODS, "*")
-        .status(if saint_response == None { 404 } else { 200 })
+        .status(status_code)
         .body(
             serde_json::to_string(&saint_response)
                 .expect("unable to serialize serde_json::Value")
