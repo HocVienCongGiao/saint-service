@@ -80,13 +80,13 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         id_found.unwrap() == id
     }
 
-    async fn insert(&self, db_request: SaintDbRequest) -> bool {
+    async fn insert(&self, db_request: SaintDbRequest) -> Result<(), &str> {
         let mut result: Result<u64, Error>;
 
         let id = db_request.id.unwrap();
         result = mutation::save_id(&(*self).client, id.clone()).await;
         if result.is_err() {
-            return false;
+            return Err("This id already exists");
         }
         let display_name = db_request.display_name.unwrap();
         result = mutation::save_name(
@@ -97,7 +97,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         )
         .await;
         if result.is_err() {
-            return false;
+            return Err("This display_name already exists");
         }
         if let Some(english_name) = db_request.english_name {
             result = mutation::save_name(
@@ -108,7 +108,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             )
             .await;
             if result.is_err() {
-                return false;
+                return Err("This english_name already exists");
             }
         }
         if let Some(french_name) = db_request.french_name {
@@ -120,7 +120,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             )
             .await;
             if result.is_err() {
-                return false;
+                return Err("This french_name already exists");
             }
         }
         if let Some(latin_name) = db_request.latin_name {
@@ -132,7 +132,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             )
             .await;
             if result.is_err() {
-                return false;
+                return Err("This latin_name already exists");
             }
         }
         let vietnamese_name = db_request.vietnamese_name.unwrap();
@@ -144,12 +144,12 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         )
         .await;
         if result.is_err() {
-            return false;
+            return Err("This vietnamese_name already exists");
         }
         let is_male = db_request.is_male.unwrap();
         result = mutation::save_gender(&(*self).client, id.clone(), is_male.clone()).await;
         if result.is_err() {
-            return false;
+            return Err("Unknown error");
         }
         let feast_day = db_request.feast_day.unwrap();
         let feast_month = db_request.feast_month.unwrap();
@@ -161,8 +161,8 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         )
         .await;
         if result.is_err() {
-            return false;
+            return Err("Unknown error");
         }
-        true
+        Ok(())
     }
 }
