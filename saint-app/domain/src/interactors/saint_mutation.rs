@@ -1,9 +1,9 @@
 use crate::boundaries;
 use crate::boundaries::{
-    CreateSaintError, SaintDbGateway, SaintDbRequest, SaintMutationRequest, SaintMutationResponse,
+    DbError, SaintDbGateway, SaintDbRequest, SaintMutationError, SaintMutationRequest,
+    SaintMutationResponse,
 };
 use async_trait::async_trait;
-use std::fmt;
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
 
@@ -19,7 +19,7 @@ where
     async fn create_saint(
         &self,
         request: SaintMutationRequest,
-    ) -> Result<SaintMutationResponse, CreateSaintError> {
+    ) -> Result<SaintMutationResponse, SaintMutationError> {
         println!("saint mutation input boundary");
         let mut id: Uuid = Uuid::new_v4();
         let mut id_is_valid: bool = false;
@@ -35,7 +35,7 @@ where
         }
         if !id_is_valid {
             println!("Can't generate id for this saint");
-            return Err(CreateSaintError::UnknownError);
+            return Err(SaintMutationError::IdCollisionError);
         }
         let saint = crate::entity::saint::Saint {
             id: Some(id),
@@ -58,10 +58,10 @@ where
                 .insert(saint.to_saint_db_request())
                 .await
                 .map(|_| saint.to_saint_mutation_response())
-                .map_err(|err| CreateSaintError::DbError(err.to_string()))
+                .map_err(|err| err.to_saint_mutation_error())
         } else {
             println!("This saint is not valid");
-            Err(CreateSaintError::InvalidSaint)
+            Err(SaintMutationError::InvalidSaint)
         }
     }
 }
@@ -109,12 +109,13 @@ impl crate::entity::saint::Saint {
     }
 }
 
-impl fmt::Display for CreateSaintError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl DbError {
+    fn to_saint_mutation_error(&self) -> SaintMutationError {
         match self {
-            CreateSaintError::DbError(err) => write!(f, "Database Error\n \tCause by: {}", err),
-            CreateSaintError::InvalidSaint => write!(f, "Invalid Saint"),
-            CreateSaintError::UnknownError => write!(f, "Unknown Error"),
+            DbError::UniqueConstraintViolationError(field) => {
+                SaintMutationError::UniqueConstraintViolationError(field.to_string())
+            }
+            DbError::UnknownError => SaintMutationError::UnknownError,
         }
     }
 }

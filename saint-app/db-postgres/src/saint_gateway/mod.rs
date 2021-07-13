@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use domain::boundaries::DbError;
 use tokio_postgres::{Client, Error};
 use uuid::Uuid;
 
@@ -80,13 +81,13 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         id_found.unwrap() == id
     }
 
-    async fn insert(&self, db_request: SaintDbRequest) -> Result<(), &str> {
+    async fn insert(&self, db_request: SaintDbRequest) -> Result<(), DbError> {
         let mut result: Result<u64, Error>;
 
         let id = db_request.id.unwrap();
         result = mutation::save_id(&(*self).client, id.clone()).await;
         if result.is_err() {
-            return Err("This id already exists");
+            return Err(DbError::UnknownError);
         }
         let display_name = db_request.display_name.unwrap();
         result = mutation::save_name(
@@ -97,7 +98,9 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         )
         .await;
         if result.is_err() {
-            return Err("This display_name already exists");
+            return Err(DbError::UniqueConstraintViolationError(
+                "display_name".to_string(),
+            ));
         }
         if let Some(english_name) = db_request.english_name {
             result = mutation::save_name(
@@ -108,7 +111,9 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             )
             .await;
             if result.is_err() {
-                return Err("This english_name already exists");
+                return Err(DbError::UniqueConstraintViolationError(
+                    "english_name".to_string(),
+                ));
             }
         }
         if let Some(french_name) = db_request.french_name {
@@ -120,7 +125,9 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             )
             .await;
             if result.is_err() {
-                return Err("This french_name already exists");
+                return Err(DbError::UniqueConstraintViolationError(
+                    "french_name".to_string(),
+                ));
             }
         }
         if let Some(latin_name) = db_request.latin_name {
@@ -132,7 +139,9 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             )
             .await;
             if result.is_err() {
-                return Err("This latin_name already exists");
+                return Err(DbError::UniqueConstraintViolationError(
+                    "latin_name".to_string(),
+                ));
             }
         }
         let vietnamese_name = db_request.vietnamese_name.unwrap();
@@ -144,12 +153,14 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         )
         .await;
         if result.is_err() {
-            return Err("This vietnamese_name already exists");
+            return Err(DbError::UniqueConstraintViolationError(
+                "vietnamese_name".to_string(),
+            ));
         }
         let is_male = db_request.is_male.unwrap();
         result = mutation::save_gender(&(*self).client, id.clone(), is_male.clone()).await;
         if result.is_err() {
-            return Err("Unknown error");
+            return Err(DbError::UnknownError);
         }
         let feast_day = db_request.feast_day.unwrap();
         let feast_month = db_request.feast_month.unwrap();
@@ -161,7 +172,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         )
         .await;
         if result.is_err() {
-            return Err("Unknown error");
+            return Err(DbError::UnknownError);
         }
         Ok(())
     }
