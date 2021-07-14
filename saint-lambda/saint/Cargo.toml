@@ -10,6 +10,7 @@ lambda_http = "0.3.0"
 
 serde_json = "1.0"
 controller = { path = "../../saint-app/controller" }
+domain = {path = "../../saint-app/domain"}
 #jsonwebtoken = "8.0.0-beta.2"
 jsonwebtoken = "7.2.0"
 serde = { version = "1.0", features = ["derive"] }

@@ -1,11 +1,10 @@
 use crate::openapi::saint::{SaintQueryResponse, ToOpenApi};
 use db_postgres::saint_gateway::SaintRepository;
 use domain::boundaries::{
-    SaintDbGateway, SaintMutationInputBoundary, SaintMutationRequest, SaintQueryInputBoundary,
-    SaintQueryRequest,
+    SaintDbGateway, SaintMutationError, SaintMutationInputBoundary, SaintMutationRequest,
+    SaintQueryInputBoundary, SaintQueryRequest,
 };
 pub use hvcg_biography_openapi_saint::models::Saint;
-use std::collections::HashMap;
 use uuid::Uuid;
 
 pub mod openapi;
@@ -24,7 +23,7 @@ pub async fn get_saint(id: Uuid) -> Option<openapi::saint::Saint> {
     Some(response.unwrap().to_openapi())
 }
 
-pub async fn create_saint(saint: &Saint) -> Option<openapi::saint::Saint> {
+pub async fn create_saint(saint: &Saint) -> Result<openapi::saint::Saint, SaintMutationError> {
     let client = db_postgres::connect().await;
 
     let saint_repository = SaintRepository { client };
@@ -42,10 +41,7 @@ pub async fn create_saint(saint: &Saint) -> Option<openapi::saint::Saint> {
                 feast_day: Some(saint.feast_day.clone()),
             })
             .await;
-    if response.is_none() {
-        return None;
-    }
-    Some(response.unwrap().to_openapi())
+    response.map(|res| res.to_openapi())
 }
 
 #[cfg(test)]

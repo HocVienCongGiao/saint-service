@@ -1,3 +1,4 @@
+use domain::boundaries::SaintMutationError;
 use hvcg_biography_openapi_saint::models::Saint;
 use jsonwebtoken::TokenData;
 use lambda_http::http::header::{
@@ -122,12 +123,20 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                 let lambda_saint_request: Saint = value;
                 let serialized_saint = serde_json::to_string(&lambda_saint_request).unwrap();
                 println!("saint_obj: {}", serialized_saint);
-                saint_response = controller::create_saint(&lambda_saint_request).await;
-                if saint_response.is_none() {
-                    status_code = 500;
-                } else {
-                    status_code = 200;
+                let result = controller::create_saint(&lambda_saint_request).await;
+                match result {
+                    Ok(_) => status_code = 200,
+                    Err(SaintMutationError::UniqueConstraintViolationError(..)) => {
+                        status_code = 503
+                    }
+                    Err(SaintMutationError::InvalidSaint) => status_code = 405,
+                    Err(SaintMutationError::UnknownError)
+                    | Err(SaintMutationError::IdCollisionError) => status_code = 500,
                 }
+                saint_response = result.map(Some).unwrap_or_else(|e| {
+                    println!("{:?}", e);
+                    None
+                });
             } else {
                 saint_response = None;
                 status_code = 400;

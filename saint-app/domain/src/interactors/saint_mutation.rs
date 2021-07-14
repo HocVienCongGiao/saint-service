@@ -1,6 +1,7 @@
 use crate::boundaries;
 use crate::boundaries::{
-    SaintDbGateway, SaintDbRequest, SaintMutationRequest, SaintMutationResponse,
+    DbError, SaintDbGateway, SaintDbRequest, SaintMutationError, SaintMutationRequest,
+    SaintMutationResponse,
 };
 use async_trait::async_trait;
 use tokio::time::{sleep, Duration};
@@ -15,7 +16,10 @@ impl<A> boundaries::SaintMutationInputBoundary for SaintMutationInteractor<A>
 where
     A: SaintDbGateway + Sync + Send,
 {
-    async fn create_saint(&self, request: SaintMutationRequest) -> Option<SaintMutationResponse> {
+    async fn create_saint(
+        &self,
+        request: SaintMutationRequest,
+    ) -> Result<SaintMutationResponse, SaintMutationError> {
         println!("saint mutation input boundary");
         let mut id: Uuid = Uuid::new_v4();
         let mut id_is_valid: bool = false;
@@ -31,7 +35,7 @@ where
         }
         if !id_is_valid {
             println!("Can't generate id for this saint");
-            return None;
+            return Err(SaintMutationError::IdCollisionError);
         }
         let saint = crate::entity::saint::Saint {
             id: Some(id),
@@ -49,15 +53,15 @@ where
         };
         if saint.is_valid() {
             println!("This saint is valid");
-            let result = (*self).db_gateway.insert(saint.to_saint_db_request()).await;
-            if !result {
-                println!("post error");
-                return None;
-            }
-            Some(saint.to_saint_mutation_response())
+            (*self)
+                .db_gateway
+                .insert(saint.to_saint_db_request())
+                .await
+                .map(|_| saint.to_saint_mutation_response())
+                .map_err(|err| err.to_saint_mutation_error())
         } else {
             println!("This saint is not valid");
-            None
+            Err(SaintMutationError::InvalidSaint)
         }
     }
 }
@@ -101,6 +105,17 @@ impl crate::entity::saint::Saint {
             vietnamese_name: self.vietnamese_name.clone().unwrap(),
             gender: self.gender.clone().unwrap(),
             feast_day: self.feast_day.clone().unwrap(),
+        }
+    }
+}
+
+impl DbError {
+    fn to_saint_mutation_error(&self) -> SaintMutationError {
+        match self {
+            DbError::UniqueConstraintViolationError(field) => {
+                SaintMutationError::UniqueConstraintViolationError(field.to_string())
+            }
+            DbError::UnknownError => SaintMutationError::UnknownError,
         }
     }
 }
