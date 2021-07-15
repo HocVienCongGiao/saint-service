@@ -155,7 +155,7 @@ impl DbError {
             DbError::UniqueConstraintViolationError(field) => {
                 SaintMutationError::UniqueConstraintViolationError(field.to_string())
             }
-            DbError::UnknownError => SaintMutationError::UnknownError,
+            DbError::UnknownError(msg) => SaintMutationError::UnknownError(msg.to_string()),
         }
     }
 }

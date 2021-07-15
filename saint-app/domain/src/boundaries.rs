@@ -90,13 +90,13 @@ pub enum SaintMutationError {
     UniqueConstraintViolationError(String),
     IdCollisionError,
     InvalidSaint,
-    UnknownError,
+    UnknownError(String),
 }
 
 #[derive(Debug)]
 pub enum DbError {
     UniqueConstraintViolationError(String),
-    UnknownError,
+    UnknownError(String),
 }
 
 // CommonUser

@@ -130,7 +130,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                         status_code = 503
                     }
                     Err(SaintMutationError::InvalidSaint) => status_code = 405,
-                    Err(SaintMutationError::UnknownError)
+                    Err(SaintMutationError::UnknownError(..))
                     | Err(SaintMutationError::IdCollisionError) => status_code = 500,
                 }
                 saint_response = result.map(Some).unwrap_or_else(|e| {
@@ -154,7 +154,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                         status_code = 503
                     }
                     Err(SaintMutationError::InvalidSaint) => status_code = 405,
-                    Err(SaintMutationError::UnknownError)
+                    Err(SaintMutationError::UnknownError(..))
                     | Err(SaintMutationError::IdCollisionError) => status_code = 500,
                 }
                 saint_response = result.map(Some).unwrap_or_else(|e| {
