@@ -119,3 +119,122 @@ async fn save_test() {
     };
     assert_eq!(deserialized_saint, expected_saint);
 }
+
+#[tokio::test]
+async fn put_test() {
+    initialise();
+    println!("is it working?");
+
+    println!("---test put method with saint not existing---");
+    let empty_saint = Saint {
+        id: None,
+        display_name: "".to_string(),
+        english_name: None,
+        french_name: None,
+        latin_name: None,
+        vietnamese_name: "".to_string(),
+        gender: "".to_string(),
+        feast_day: "".to_string(),
+    };
+
+    let saint_request = Saint {
+        id: None,
+        display_name: "test".to_string(),
+        english_name: None,
+        french_name: None,
+        latin_name: None,
+        vietnamese_name: "test".to_string(),
+        gender: "MALE".to_string(),
+        feast_day: "01-01".to_string(),
+    };
+
+    let serialized_saint = serde_json::to_string(&saint_request).unwrap();
+
+    let request = http::Request::builder()
+        .uri("https://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saint")
+        .method("PUT")
+        .header("Content-Type", "application/json")
+        .body(Body::from(serialized_saint))
+        .unwrap();
+
+    let response = saint::saint(request, Context::default())
+        .await
+        .expect("expected Ok(_) value")
+        .into_response();
+
+    let deserialized_saint: Saint;
+    if let Body::Text(saint_obj) = response.body() {
+        deserialized_saint =
+            serde_json::from_str(saint_obj).expect("Unable deserialise response body");
+    } else {
+        deserialized_saint = empty_saint;
+    }
+
+    let save_id = deserialized_saint.id;
+    let expected_saint = Saint {
+        id: save_id,
+        display_name: "test".to_string(),
+        english_name: None,
+        french_name: None,
+        latin_name: None,
+        vietnamese_name: "test".to_string(),
+        gender: "MALE".to_string(),
+        feast_day: "01-01".to_string(),
+    };
+    assert_eq!(deserialized_saint, expected_saint);
+
+    println!("---test put method with saint existing---");
+    let empty_saint = Saint {
+        id: None,
+        display_name: "".to_string(),
+        english_name: None,
+        french_name: None,
+        latin_name: None,
+        vietnamese_name: "".to_string(),
+        gender: "".to_string(),
+        feast_day: "".to_string(),
+    };
+    let saint_request = Saint {
+        id: save_id,
+        display_name: "update".to_string(),
+        english_name: Some("update".to_string()),
+        french_name: Some("update".to_string()),
+        latin_name: Some("update".to_string()),
+        vietnamese_name: "update".to_string(),
+        gender: "MALE".to_string(),
+        feast_day: "01-01".to_string(),
+    };
+
+    let serialized_saint = serde_json::to_string(&saint_request).unwrap();
+
+    let request = http::Request::builder()
+        .uri("https://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saint")
+        .method("PUT")
+        .header("Content-Type", "application/json")
+        .body(Body::from(serialized_saint))
+        .unwrap();
+
+    let response = saint::saint(request, Context::default())
+        .await
+        .expect("expected Ok(_) value")
+        .into_response();
+
+    let deserialized_saint: Saint;
+    if let Body::Text(saint_obj) = response.body() {
+        deserialized_saint =
+            serde_json::from_str(saint_obj).expect("Unable deserialise response body");
+    } else {
+        deserialized_saint = empty_saint;
+    }
+    let expected_saint = Saint {
+        id: save_id,
+        display_name: "update".to_string(),
+        english_name: Some("update".to_string()),
+        french_name: Some("update".to_string()),
+        latin_name: Some("update".to_string()),
+        vietnamese_name: "update".to_string(),
+        gender: "MALE".to_string(),
+        feast_day: "01-01".to_string(),
+    };
+    assert_eq!(deserialized_saint, expected_saint);
+}

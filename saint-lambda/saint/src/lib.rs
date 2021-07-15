@@ -134,7 +134,31 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                     | Err(SaintMutationError::IdCollisionError) => status_code = 500,
                 }
                 saint_response = result.map(Some).unwrap_or_else(|e| {
-                    println!("{:?}", e);
+                    println!("error: {:?}", e);
+                    None
+                });
+            } else {
+                saint_response = None;
+                status_code = 400;
+            }
+        }
+        method::Method::PUT => {
+            if let Some(value) = req.payload().unwrap_or(None) {
+                let lambda_saint_request: Saint = value;
+                let serialized_saint = serde_json::to_string(&lambda_saint_request).unwrap();
+                println!("saint_obj: {}", serialized_saint);
+                let result = controller::update_saint(&lambda_saint_request).await;
+                match result {
+                    Ok(_) => status_code = 200,
+                    Err(SaintMutationError::UniqueConstraintViolationError(..)) => {
+                        status_code = 503
+                    }
+                    Err(SaintMutationError::InvalidSaint) => status_code = 405,
+                    Err(SaintMutationError::UnknownError)
+                    | Err(SaintMutationError::IdCollisionError) => status_code = 500,
+                }
+                saint_response = result.map(Some).unwrap_or_else(|e| {
+                    println!("error: {:?}", e);
                     None
                 });
             } else {

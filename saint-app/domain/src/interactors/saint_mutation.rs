@@ -20,7 +20,7 @@ where
         &self,
         request: SaintMutationRequest,
     ) -> Result<SaintMutationResponse, SaintMutationError> {
-        println!("saint mutation input boundary");
+        println!("saint mutation input boundary: creating");
         let mut id: Uuid = Uuid::new_v4();
         let mut id_is_valid: bool = false;
         for _ in 0..5 {
@@ -56,6 +56,46 @@ where
             (*self)
                 .db_gateway
                 .insert(saint.to_saint_db_request())
+                .await
+                .map(|_| saint.to_saint_mutation_response())
+                .map_err(|err| err.to_saint_mutation_error())
+        } else {
+            println!("This saint is not valid");
+            Err(SaintMutationError::InvalidSaint)
+        }
+    }
+
+    async fn update_saint(
+        &self,
+        request: SaintMutationRequest,
+    ) -> Result<SaintMutationResponse, SaintMutationError> {
+        if request.id.is_none() {
+            return (*self).create_saint(request).await;
+        }
+        let is_exists = (*self).db_gateway.exists_by_id(request.id.unwrap()).await;
+        if !is_exists {
+            return (*self).create_saint(request).await;
+        }
+        println!("saint mutation input boundary: updating");
+        let saint = crate::entity::saint::Saint {
+            id: request.id,
+            display_name: request.display_name,
+            english_name: request.english_name,
+            french_name: request.french_name,
+            latin_name: request.latin_name,
+            vietnamese_name: request.vietnamese_name,
+            gender: if let Some(string) = request.gender {
+                Some(string.to_uppercase())
+            } else {
+                None
+            },
+            feast_day: request.feast_day,
+        };
+        if saint.is_valid() {
+            println!("This saint is valid");
+            (*self)
+                .db_gateway
+                .update(saint.to_saint_db_request())
                 .await
                 .map(|_| saint.to_saint_mutation_response())
                 .map_err(|err| err.to_saint_mutation_error())
