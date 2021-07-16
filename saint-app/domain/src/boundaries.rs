@@ -12,6 +12,10 @@ pub trait SaintMutationInputBoundary {
         &self,
         request: SaintMutationRequest,
     ) -> Result<SaintMutationResponse, SaintMutationError>;
+    async fn update_saint(
+        &self,
+        request: SaintMutationRequest,
+    ) -> Result<SaintMutationResponse, SaintMutationError>;
 }
 
 pub struct SaintMutationRequest {
@@ -78,6 +82,7 @@ pub trait SaintDbGateway {
     async fn find_by_id(&self, id: Uuid) -> Option<SaintDbResponse>;
     async fn exists_by_id(&self, id: Uuid) -> bool;
     async fn insert(&self, db_request: SaintDbRequest) -> Result<(), DbError>;
+    async fn update(&self, db_request: SaintDbRequest) -> Result<(), DbError>;
 }
 
 #[derive(Debug)]
@@ -85,13 +90,13 @@ pub enum SaintMutationError {
     UniqueConstraintViolationError(String),
     IdCollisionError,
     InvalidSaint,
-    UnknownError,
+    UnknownError(String),
 }
 
 #[derive(Debug)]
 pub enum DbError {
     UniqueConstraintViolationError(String),
-    UnknownError,
+    UnknownError(String),
 }
 
 // CommonUser

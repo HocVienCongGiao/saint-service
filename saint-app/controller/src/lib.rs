@@ -44,6 +44,27 @@ pub async fn create_saint(saint: &Saint) -> Result<openapi::saint::Saint, SaintM
     response.map(|res| res.to_openapi())
 }
 
+pub async fn update_saint(saint: &Saint) -> Result<openapi::saint::Saint, SaintMutationError> {
+    let client = db_postgres::connect().await;
+
+    let saint_repository = SaintRepository { client };
+
+    let response =
+        domain::interactors::saint_mutation::SaintMutationInteractor::new(saint_repository)
+            .update_saint(SaintMutationRequest {
+                id: saint.id,
+                display_name: Some(saint.display_name.clone()),
+                english_name: saint.english_name.clone(),
+                french_name: saint.french_name.clone(),
+                latin_name: saint.latin_name.clone(),
+                vietnamese_name: Some(saint.vietnamese_name.clone()),
+                gender: Some(saint.gender.clone()),
+                feast_day: Some(saint.feast_day.clone()),
+            })
+            .await;
+    response.map(|res| res.to_openapi())
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

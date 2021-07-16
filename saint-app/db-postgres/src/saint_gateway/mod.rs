@@ -86,8 +86,10 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
 
         let id = db_request.id.unwrap();
         result = mutation::save_id(&(*self).client, id.clone()).await;
-        if result.is_err() {
-            return Err(DbError::UnknownError);
+        if let Err(error) = result {
+            return Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ));
         }
         let display_name = db_request.display_name.unwrap();
         result = mutation::save_name(
@@ -159,8 +161,10 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         }
         let is_male = db_request.is_male.unwrap();
         result = mutation::save_gender(&(*self).client, id.clone(), is_male.clone()).await;
-        if result.is_err() {
-            return Err(DbError::UnknownError);
+        if let Err(error) = result {
+            return Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ));
         }
         let feast_day = db_request.feast_day.unwrap();
         let feast_month = db_request.feast_month.unwrap();
@@ -171,8 +175,107 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             feast_month.clone(),
         )
         .await;
-        if result.is_err() {
-            return Err(DbError::UnknownError);
+        if let Err(error) = result {
+            return Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    async fn update(&self, db_request: SaintDbRequest) -> Result<(), DbError> {
+        let mut result: Result<u64, Error>;
+
+        let id = db_request.id.unwrap();
+
+        let display_name = db_request.display_name.unwrap();
+        result = mutation::update_name(
+            &(*self).client,
+            id.clone(),
+            "display_name".to_string(),
+            display_name.clone(),
+        )
+        .await;
+        if let Err(error) = result {
+            return Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ));
+        }
+        if let Some(english_name) = db_request.english_name {
+            result = mutation::update_name(
+                &(*self).client,
+                id.clone(),
+                "english_name".to_string(),
+                english_name.clone(),
+            )
+            .await;
+            if let Err(error) = result {
+                return Err(DbError::UnknownError(
+                    error.into_source().unwrap().to_string(),
+                ));
+            }
+        }
+        if let Some(french_name) = db_request.french_name {
+            result = mutation::update_name(
+                &(*self).client,
+                id.clone(),
+                "french_name".to_string(),
+                french_name.clone(),
+            )
+            .await;
+            if let Err(error) = result {
+                return Err(DbError::UnknownError(
+                    error.into_source().unwrap().to_string(),
+                ));
+            }
+        }
+        if let Some(latin_name) = db_request.latin_name {
+            result = mutation::update_name(
+                &(*self).client,
+                id.clone(),
+                "latin_name".to_string(),
+                latin_name.clone(),
+            )
+            .await;
+            if let Err(error) = result {
+                return Err(DbError::UnknownError(
+                    error.into_source().unwrap().to_string(),
+                ));
+            }
+        }
+        let vietnamese_name = db_request.vietnamese_name.unwrap();
+        result = mutation::update_name(
+            &(*self).client,
+            id.clone(),
+            "vietnamese_name".to_string(),
+            vietnamese_name.clone(),
+        )
+        .await;
+        if let Err(error) = result {
+            return Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ));
+        }
+        let is_male = db_request.is_male.unwrap();
+        result = mutation::update_gender(&(*self).client, id.clone(), is_male.clone()).await;
+        if let Err(error) = result {
+            return Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ));
+        }
+        let feast_day = db_request.feast_day.unwrap();
+        let feast_month = db_request.feast_month.unwrap();
+        result = mutation::update_feast_day(
+            &(*self).client,
+            id.clone(),
+            feast_day.clone(),
+            feast_month.clone(),
+        )
+        .await;
+        if let Err(error) = result {
+            return Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ));
         }
         Ok(())
     }
