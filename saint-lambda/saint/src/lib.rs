@@ -130,8 +130,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                         status_code = 503
                     }
                     Err(SaintMutationError::InvalidSaint) => status_code = 405,
-                    Err(SaintMutationError::UnknownError(..))
-                    | Err(SaintMutationError::IdCollisionError) => status_code = 500,
+                    _ => status_code = 500,
                 }
                 saint_response = result.map(Some).unwrap_or_else(|e| {
                     println!("error: {:?}", e);
@@ -154,8 +153,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                         status_code = 503
                     }
                     Err(SaintMutationError::InvalidSaint) => status_code = 405,
-                    Err(SaintMutationError::UnknownError(..))
-                    | Err(SaintMutationError::IdCollisionError) => status_code = 500,
+                    _ => status_code = 500,
                 }
                 saint_response = result.map(Some).unwrap_or_else(|e| {
                     println!("error: {:?}", e);
@@ -164,6 +162,23 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             } else {
                 saint_response = None;
                 status_code = 400;
+            }
+        }
+        method::Method::DELETE => {
+            if let Some(id) = get_id_from_uri(req.uri()) {
+                let result = controller::delete_saint(id).await;
+                match result {
+                    Ok(_) => status_code = 200,
+                    Err(SaintMutationError::SaintNotFound) => status_code = 404,
+                    _ => status_code = 500,
+                }
+                saint_response = result.map(Some).unwrap_or_else(|e| {
+                    println!("error: {:?}", e);
+                    None
+                });
+            } else {
+                saint_response = None;
+                status_code = 500;
             }
         }
         _ => {

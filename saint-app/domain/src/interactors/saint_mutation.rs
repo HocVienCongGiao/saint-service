@@ -1,7 +1,7 @@
 use crate::boundaries;
 use crate::boundaries::{
-    DbError, SaintDbGateway, SaintDbRequest, SaintMutationError, SaintMutationRequest,
-    SaintMutationResponse,
+    DbError, SaintDbGateway, SaintDbRequest, SaintDbResponse, SaintMutationError,
+    SaintMutationRequest, SaintMutationResponse,
 };
 use async_trait::async_trait;
 use tokio::time::{sleep, Duration};
@@ -104,6 +104,27 @@ where
             Err(SaintMutationError::InvalidSaint)
         }
     }
+
+    async fn delete_saint(
+        &self,
+        request: SaintMutationRequest,
+    ) -> Result<SaintMutationResponse, SaintMutationError> {
+        let id = request.id.unwrap();
+        println!("saint mutation input boundary {}", id);
+
+        if let Some(db_response) = ((*self).db_gateway.find_by_id(id.clone())).await {
+            println!("saint found");
+            (*self)
+                .db_gateway
+                .delete(id.clone())
+                .await
+                .map(|_| db_response.to_saint_mutation_response())
+                .map_err(|err| err.to_saint_mutation_error())
+        } else {
+            println!("saint not found");
+            Err(SaintMutationError::SaintNotFound)
+        }
+    }
 }
 
 impl<A> SaintMutationInteractor<A>
@@ -156,6 +177,25 @@ impl DbError {
                 SaintMutationError::UniqueConstraintViolationError(field.to_string())
             }
             DbError::UnknownError(msg) => SaintMutationError::UnknownError(msg.to_string()),
+        }
+    }
+}
+
+impl SaintDbResponse {
+    fn to_saint_mutation_response(&self) -> SaintMutationResponse {
+        SaintMutationResponse {
+            id: self.id.clone(),
+            english_name: self.english_name.clone(),
+            french_name: self.french_name.clone(),
+            latin_name: self.latin_name.clone(),
+            vietnamese_name: self.vietnamese_name.clone(),
+            display_name: self.display_name.clone(),
+            gender: if self.is_male {
+                "male".to_string()
+            } else {
+                "female".to_string()
+            },
+            feast_day: format!("{:?}-{:?}", self.feast_day, self.feast_month),
         }
     }
 }

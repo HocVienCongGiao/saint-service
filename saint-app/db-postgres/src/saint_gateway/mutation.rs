@@ -101,3 +101,50 @@ pub(crate) async fn update_feast_day(
     let params: &[&(dyn ToSql + Sync)] = &[&id, &feast_day, &feast_month];
     client.execute(&stmt, params).await
 }
+
+pub(crate) async fn delete_id(client: &Client, id: Uuid) -> Result<u64, Error> {
+    let statement = format!("DELETE FROM public.saint__saint WHERE id = $1");
+    let stmt = (*client).prepare(&statement).await.unwrap();
+
+    // let stmt = block_on(stmt_future).unwrap();
+    let params: &[&(dyn ToSql + Sync)] = &[&id];
+    client.execute(&stmt, params).await
+}
+
+pub(crate) async fn delete_name(
+    client: &Client,
+    id: Uuid,
+    field_name: String,
+) -> Result<u64, Error> {
+    let statement = format!(
+        "DELETE FROM public.saint__saint_{} WHERE id = $1",
+        field_name
+    );
+    let stmt = (*client).prepare(&statement).await.unwrap();
+
+    // let stmt = block_on(stmt_future).unwrap();
+    let params: &[&(dyn ToSql + Sync)] = &[&id];
+    client.execute(&stmt, params).await
+}
+
+pub(crate) async fn delete_gender(client: &Client, id: Uuid) -> Result<u64, Error> {
+    let stmt = (*client)
+        .prepare("DELETE FROM public.saint__saint_gender WHERE id = $1")
+        .await
+        .unwrap();
+
+    // let stmt = block_on(stmt_future).unwrap();
+    let params: &[&(dyn ToSql + Sync)] = &[&id];
+    client.execute(&stmt, params).await
+}
+
+pub(crate) async fn delete_feast_day(client: &Client, id: Uuid) -> Result<u64, Error> {
+    let stmt = (*client)
+        .prepare("DELETE FROM public.saint__saint_feast_day WHERE id = $1")
+        .await
+        .unwrap();
+
+    // let stmt = block_on(stmt_future).unwrap();
+    let params: &[&(dyn ToSql + Sync)] = &[&id];
+    client.execute(&stmt, params).await
+}
