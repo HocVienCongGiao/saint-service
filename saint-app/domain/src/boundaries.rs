@@ -16,6 +16,7 @@ pub trait SaintMutationInputBoundary {
         &self,
         request: SaintMutationRequest,
     ) -> Result<SaintMutationResponse, SaintMutationError>;
+    async fn delete_saint(&self, request: SaintMutationRequest) -> Result<(), SaintMutationError>;
 }
 
 pub struct SaintMutationRequest {
@@ -83,6 +84,7 @@ pub trait SaintDbGateway {
     async fn exists_by_id(&self, id: Uuid) -> bool;
     async fn insert(&self, db_request: SaintDbRequest) -> Result<(), DbError>;
     async fn update(&self, db_request: SaintDbRequest) -> Result<(), DbError>;
+    async fn delete(&self, id: Uuid) -> Result<(), DbError>;
 }
 
 #[derive(Debug)]
@@ -91,6 +93,7 @@ pub enum SaintMutationError {
     IdCollisionError,
     InvalidSaint,
     UnknownError(String),
+    SaintNotFound,
 }
 
 #[derive(Debug)]

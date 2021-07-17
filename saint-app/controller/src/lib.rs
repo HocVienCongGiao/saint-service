@@ -65,6 +65,27 @@ pub async fn update_saint(saint: &Saint) -> Result<openapi::saint::Saint, SaintM
     response.map(|res| res.to_openapi())
 }
 
+pub async fn delete_saint(id: Uuid) -> Result<(), SaintMutationError> {
+    let client = db_postgres::connect().await;
+
+    let saint_repository = SaintRepository { client };
+
+    let response =
+        domain::interactors::saint_mutation::SaintMutationInteractor::new(saint_repository)
+            .delete_saint(SaintMutationRequest {
+                id: Some(id),
+                display_name: None,
+                english_name: None,
+                french_name: None,
+                latin_name: None,
+                vietnamese_name: None,
+                gender: None,
+                feast_day: None,
+            })
+            .await;
+    response
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

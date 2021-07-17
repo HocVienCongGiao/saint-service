@@ -37,7 +37,7 @@ async fn integration_works() {
         .unwrap();
 
     let expected =
-            "{\"id\":\"40e6215d-b5c6-4896-987c-f30f3678f608\",\"displayName\":\"Phêrô\",\"englishName\":\"Peter the Apostle\",\"frenchName\":\"saint Pierre\",\"latinName\":\"Simon Petrus\",\"vietnameseName\":\"Thánh Phêrô Tông đồ\",\"gender\":\"male\",\"feastDay\":\"29-6\"}"
+            "{\"id\":\"40e6215d-b5c6-4896-987c-f30f3678f608\",\"displayName\":\"Phêrô\",\"englishName\":\"Peter the Apostle\",\"frenchName\":\"saint Pierre\",\"latinName\":\"Simon Petrus\",\"vietnameseName\":\"Thánh Phêrô Tông đồ\",\"gender\":\"MALE\",\"feastDay\":\"29-06\"}"
         .into_response();
 
     let response = saint::saint(request, Context::default())
@@ -237,4 +237,90 @@ async fn put_test() {
         feast_day: "01-01".to_string(),
     };
     assert_eq!(deserialized_saint, expected_saint);
+}
+
+#[tokio::test]
+async fn delete_test() {
+    initialise();
+    println!("is it working?");
+
+    println!("---Creating Saint---");
+    let saint_request = Saint {
+        id: None,
+        display_name: "delete_test".to_string(),
+        english_name: None,
+        french_name: None,
+        latin_name: None,
+        vietnamese_name: "delete_test".to_string(),
+        gender: "MALE".to_string(),
+        feast_day: "01-01".to_string(),
+    };
+    let serialized_saint = serde_json::to_string(&saint_request).unwrap();
+    let request = http::Request::builder()
+        .uri("https://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saints")
+        .method("POST")
+        .header("Content-Type", "application/json")
+        .body(Body::from(serialized_saint))
+        .unwrap();
+    let response = saint::saint(request, Context::default())
+        .await
+        .expect("expected Ok(_) value")
+        .into_response();
+
+    assert_eq!(response.status(), 200);
+
+    let empty_saint = Saint {
+        id: None,
+        display_name: "".to_string(),
+        english_name: None,
+        french_name: None,
+        latin_name: None,
+        vietnamese_name: "".to_string(),
+        gender: "".to_string(),
+        feast_day: "".to_string(),
+    };
+    let deserialized_saint: Saint;
+    if let Body::Text(saint_obj) = response.body() {
+        deserialized_saint =
+            serde_json::from_str(saint_obj).expect("Unable deserialise response body");
+    } else {
+        deserialized_saint = empty_saint;
+    }
+    let save_id = deserialized_saint.id;
+
+    println!("---Deleting Saint---");
+    let uri = format!(
+        "http://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saints/{}",
+        save_id.unwrap().to_hyphenated()
+    );
+    let request = http::Request::builder()
+        .uri(uri)
+        .method("DELETE")
+        .header("Content-Type", "application/json")
+        .body(Body::Empty)
+        .unwrap();
+    let response = saint::saint(request, Context::default())
+        .await
+        .expect("expected Ok(_) value")
+        .into_response();
+
+    assert_eq!(response.status(), 204);
+
+    println!("---Try getting Saint after deleting---");
+    let uri = format!(
+        "http://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints/{}",
+        save_id.unwrap().to_hyphenated()
+    );
+    let request = http::Request::builder()
+        .uri(uri)
+        .method("GET")
+        .header("Content-Type", "application/json")
+        .body(Body::Empty)
+        .unwrap();
+    let response = saint::saint(request, Context::default())
+        .await
+        .expect("expected Ok(_) value")
+        .into_response();
+
+    assert_eq!(response.status(), 404)
 }

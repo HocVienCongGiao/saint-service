@@ -1,7 +1,7 @@
 use crate::boundaries;
 use crate::boundaries::{
-    DbError, SaintDbGateway, SaintDbRequest, SaintMutationError, SaintMutationRequest,
-    SaintMutationResponse,
+    DbError, SaintDbGateway, SaintDbRequest, SaintDbResponse, SaintMutationError,
+    SaintMutationRequest, SaintMutationResponse,
 };
 use async_trait::async_trait;
 use tokio::time::{sleep, Duration};
@@ -102,6 +102,23 @@ where
         } else {
             println!("This saint is not valid");
             Err(SaintMutationError::InvalidSaint)
+        }
+    }
+
+    async fn delete_saint(&self, request: SaintMutationRequest) -> Result<(), SaintMutationError> {
+        let id = request.id.unwrap();
+        println!("saint mutation input boundary {}", id);
+
+        if ((*self).db_gateway.exists_by_id(id.clone())).await {
+            println!("saint found");
+            (*self)
+                .db_gateway
+                .delete(id.clone())
+                .await
+                .map_err(|err| err.to_saint_mutation_error())
+        } else {
+            println!("saint not found");
+            Err(SaintMutationError::SaintNotFound)
         }
     }
 }
