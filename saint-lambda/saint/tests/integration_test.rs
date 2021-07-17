@@ -284,19 +284,9 @@ async fn delete_test() {
         deserialized_saint =
             serde_json::from_str(saint_obj).expect("Unable deserialise response body");
     } else {
-        deserialized_saint = empty_saint.clone();
+        deserialized_saint = empty_saint;
     }
     let save_id = deserialized_saint.id;
-    let expected_saint = Saint {
-        id: save_id,
-        display_name: "delete_test".to_string(),
-        english_name: None,
-        french_name: None,
-        latin_name: None,
-        vietnamese_name: "delete_test".to_string(),
-        gender: "MALE".to_string(),
-        feast_day: "01-01".to_string(),
-    };
 
     println!("---Deleting Saint---");
     let uri = format!(
@@ -313,13 +303,24 @@ async fn delete_test() {
         .await
         .expect("expected Ok(_) value")
         .into_response();
-    let deserialized_saint: Saint;
-    if let Body::Text(saint_obj) = response.body() {
-        deserialized_saint =
-            serde_json::from_str(saint_obj).expect("Unable deserialise response body");
-    } else {
-        deserialized_saint = empty_saint;
-    }
 
-    assert_eq!(deserialized_saint, expected_saint)
+    assert_eq!(response.status(), 204);
+
+    println!("---Try getting Saint after deleting---");
+    let uri = format!(
+        "http://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints/{}",
+        save_id.unwrap().to_hyphenated()
+    );
+    let request = http::Request::builder()
+        .uri(uri)
+        .method("GET")
+        .header("Content-Type", "application/json")
+        .body(Body::Empty)
+        .unwrap();
+    let response = saint::saint(request, Context::default())
+        .await
+        .expect("expected Ok(_) value")
+        .into_response();
+
+    assert_eq!(response.status(), 404)
 }

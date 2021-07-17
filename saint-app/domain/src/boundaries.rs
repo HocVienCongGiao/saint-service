@@ -16,10 +16,7 @@ pub trait SaintMutationInputBoundary {
         &self,
         request: SaintMutationRequest,
     ) -> Result<SaintMutationResponse, SaintMutationError>;
-    async fn delete_saint(
-        &self,
-        request: SaintMutationRequest,
-    ) -> Result<SaintMutationResponse, SaintMutationError>;
+    async fn delete_saint(&self, request: SaintMutationRequest) -> Result<(), SaintMutationError>;
 }
 
 pub struct SaintMutationRequest {

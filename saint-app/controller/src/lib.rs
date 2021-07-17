@@ -65,7 +65,7 @@ pub async fn update_saint(saint: &Saint) -> Result<openapi::saint::Saint, SaintM
     response.map(|res| res.to_openapi())
 }
 
-pub async fn delete_saint(id: Uuid) -> Result<openapi::saint::Saint, SaintMutationError> {
+pub async fn delete_saint(id: Uuid) -> Result<(), SaintMutationError> {
     let client = db_postgres::connect().await;
 
     let saint_repository = SaintRepository { client };
@@ -83,7 +83,7 @@ pub async fn delete_saint(id: Uuid) -> Result<openapi::saint::Saint, SaintMutati
                 feast_day: None,
             })
             .await;
-    response.map(|res| res.to_openapi())
+    response
 }
 
 #[cfg(test)]
