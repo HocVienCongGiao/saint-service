@@ -43,11 +43,11 @@ impl SaintDbResponse {
             vietnamese_name: self.vietnamese_name.clone(),
             display_name: self.display_name.clone(),
             gender: if self.is_male {
-                "male".to_string()
+                "MALE".to_string()
             } else {
-                "female".to_string()
+                "FEMALE".to_string()
             },
-            feast_day: format!("{:?}-{:?}", self.feast_day, self.feast_month),
+            feast_day: format!("{:02}-{:02}", self.feast_day, self.feast_month),
         }
     }
 }

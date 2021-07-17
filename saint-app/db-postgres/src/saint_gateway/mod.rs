@@ -283,12 +283,6 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
     async fn delete(&self, id: Uuid) -> Result<(), DbError> {
         let mut result: Result<u64, Error>;
 
-        result = mutation::delete_id(&(*self).client, id.clone()).await;
-        if let Err(error) = result {
-            return Err(DbError::UnknownError(
-                error.into_source().unwrap().to_string(),
-            ));
-        }
         result =
             mutation::delete_name(&(*self).client, id.clone(), "display_name".to_string()).await;
         if let Err(error) = result {
@@ -330,6 +324,12 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             ));
         }
         result = mutation::delete_feast_day(&(*self).client, id.clone()).await;
+        if let Err(error) = result {
+            return Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ));
+        }
+        result = mutation::delete_id(&(*self).client, id.clone()).await;
         if let Err(error) = result {
             return Err(DbError::UnknownError(
                 error.into_source().unwrap().to_string(),

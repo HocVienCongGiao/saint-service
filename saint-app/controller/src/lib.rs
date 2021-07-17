@@ -72,7 +72,7 @@ pub async fn delete_saint(id: Uuid) -> Result<openapi::saint::Saint, SaintMutati
 
     let response =
         domain::interactors::saint_mutation::SaintMutationInteractor::new(saint_repository)
-            .update_saint(SaintMutationRequest {
+            .delete_saint(SaintMutationRequest {
                 id: Some(id),
                 display_name: None,
                 english_name: None,
