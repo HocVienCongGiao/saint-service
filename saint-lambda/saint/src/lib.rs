@@ -142,11 +142,13 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         method::Method::PUT => {
-            if let Some(value) = req.payload().unwrap_or(None) {
-                let lambda_saint_request: Saint = value;
+            let id = get_id_from_uri(req.uri());
+            let value = req.payload().unwrap_or(None);
+            if id.is_some() && value.is_some() {
+                let lambda_saint_request: Saint = value.unwrap();
                 let serialized_saint = serde_json::to_string(&lambda_saint_request).unwrap();
                 println!("saint_obj: {}", serialized_saint);
-                let result = controller::update_saint(&lambda_saint_request).await;
+                let result = controller::update_saint(&lambda_saint_request, id.unwrap()).await;
                 match result {
                     Ok(_) => status_code = 200,
                     Err(SaintMutationError::UniqueConstraintViolationError(..)) => {
