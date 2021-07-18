@@ -151,7 +151,7 @@ async fn put_test() {
     let serialized_saint = serde_json::to_string(&saint_request).unwrap();
 
     let request = http::Request::builder()
-        .uri("https://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saint")
+        .uri("https://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saints/00000000-0000-0000-0000-000000000000")
         .method("PUT")
         .header("Content-Type", "application/json")
         .body(Body::from(serialized_saint))
@@ -195,7 +195,7 @@ async fn put_test() {
         feast_day: "".to_string(),
     };
     let saint_request = Saint {
-        id: save_id,
+        id: None,
         display_name: "update".to_string(),
         english_name: Some("update".to_string()),
         french_name: Some("update".to_string()),
@@ -204,11 +204,13 @@ async fn put_test() {
         gender: "MALE".to_string(),
         feast_day: "01-01".to_string(),
     };
-
     let serialized_saint = serde_json::to_string(&saint_request).unwrap();
-
+    let uri = format!(
+        "http://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saints/{}",
+        save_id.unwrap().to_hyphenated()
+    );
     let request = http::Request::builder()
-        .uri("https://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saint")
+        .uri(uri)
         .method("PUT")
         .header("Content-Type", "application/json")
         .body(Body::from(serialized_saint))
