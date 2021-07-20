@@ -22,17 +22,18 @@ pub async fn get_collection(
 ) -> Result<Vec<Row>, Error> {
     let statement = format!(
         "SELECT * FROM saint__saint_view \
-        WHERE display_name LIKE {} AND is_male LIKE {} \
+        WHERE display_name LIKE {} AND is_male IN ({}) \
         LIMIT {} OFFSET {}",
         display_name.unwrap_or("\'%\'".to_string()),
         is_male
             .map(|value| value.to_string())
-            .unwrap_or("\'%\'".to_string()),
+            .unwrap_or("TRUE, FALSE".to_string()),
         count
             .map(|value| value.to_string())
             .unwrap_or("ALL".to_string()),
         offset.unwrap_or(0)
     );
+    println!("statement = {}", statement);
     let stmt = (*client).prepare(&statement).await.unwrap();
 
     // let stmt = block_on(stmt_future).unwrap();

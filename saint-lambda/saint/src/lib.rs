@@ -41,6 +41,28 @@ struct TokenPayload {
 }
 */
 
+#[derive(Deserialize, Serialize)]
+pub struct SaintQuery {
+    gender: Option<String>,
+    display_name: Option<String>,
+    offset: Option<u16>,
+    count: Option<u16>,
+}
+
+pub fn get_query_from_uri(uri: &Uri) -> SaintQuery {
+    let query = uri.query();
+    if let Some(saint_query) = query {
+        serde_qs::from_str::<SaintQuery>(saint_query).unwrap()
+    } else {
+        SaintQuery {
+            gender: None,
+            display_name: None,
+            offset: None,
+            count: None,
+        }
+    }
+}
+
 pub fn get_id_from_uri(uri: &Uri) -> Option<uuid::Uuid> {
     let uri_path = std::path::Path::new(uri.path());
     if !uri_path.ends_with("saints") {
@@ -116,13 +138,11 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                     status_code = 200;
                 }
             } else {
-                let query = req.query_string_parameters();
-                let gender: Option<String> = query.get("gender").map(|value| value.to_string());
-                let display_name: Option<String> =
-                    query.get("displayName").map(|value| value.to_string());
-                let offset: Option<u16> = query.get("offset").map(|value| value.parse().unwrap());
-                let count: Option<u16> = query.get("count").map(|value| value.parse().unwrap());
-
+                let query = get_query_from_uri(req.uri());
+                let gender: Option<String> = query.gender;
+                let display_name: Option<String> = query.display_name;
+                let offset: Option<u16> = query.offset;
+                let count: Option<u16> = query.count;
                 saint_collection =
                     controller::get_saints(gender, display_name, offset, count).await;
                 is_get_saints = true;
@@ -210,7 +230,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
         .header(ACCESS_CONTROL_ALLOW_METHODS, "*")
         .status(status_code)
-        .body(if saint_response.is_none() {
+        .body(if saint_response.is_none() && saint_collection.is_empty() {
             Body::Empty
         } else {
             if is_get_saints {
