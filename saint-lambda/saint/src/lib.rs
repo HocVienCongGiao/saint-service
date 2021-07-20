@@ -102,10 +102,13 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
     );
 
     let saint_response: Option<controller::openapi::saint::Saint>;
+    let saint_collection: Vec<Saint>;
+    let mut is_get_saints = false;
     let status_code: u16;
     match *req.method() {
         method::Method::GET => {
             if let Some(id) = get_id_from_uri(req.uri()) {
+                saint_collection = vec![];
                 saint_response = controller::get_saint(id).await;
                 if saint_response.is_none() {
                     status_code = 404;
@@ -113,12 +116,22 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                     status_code = 200;
                 }
             } else {
-                // get_saints();
+                let query = req.query_string_parameters();
+                let gender: Option<String> = query.get("gender").map(|value| value.to_string());
+                let display_name: Option<String> =
+                    query.get("displayName").map(|value| value.to_string());
+                let offset: Option<u16> = query.get("offset").map(|value| value.parse().unwrap());
+                let count: Option<u16> = query.get("count").map(|value| value.parse().unwrap());
+
+                saint_collection =
+                    controller::get_saints(gender, display_name, offset, count).await;
+                is_get_saints = true;
                 saint_response = None;
-                status_code = 404;
+                status_code = 200;
             }
         }
         method::Method::POST => {
+            saint_collection = vec![];
             if let Some(value) = req.payload().unwrap_or(None) {
                 let lambda_saint_request: Saint = value;
                 let serialized_saint = serde_json::to_string(&lambda_saint_request).unwrap();
@@ -142,6 +155,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         method::Method::PUT => {
+            saint_collection = vec![];
             let id = get_id_from_uri(req.uri());
             let value = req.payload().unwrap_or(None);
             if id.is_some() && value.is_some() {
@@ -167,6 +181,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         method::Method::DELETE => {
+            saint_collection = vec![];
             saint_response = None;
             if let Some(id) = get_id_from_uri(req.uri()) {
                 let result = controller::delete_saint(id).await;
@@ -183,6 +198,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         _ => {
+            saint_collection = vec![];
             saint_response = None;
             status_code = 404;
         }
@@ -197,9 +213,13 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         .body(if saint_response.is_none() {
             Body::Empty
         } else {
-            serde_json::to_string(&saint_response)
-                .expect("unable to serialize serde_json::Value")
-                .into()
+            if is_get_saints {
+                serde_json::to_string(&saint_collection)
+            } else {
+                serde_json::to_string(&saint_response)
+            }
+            .expect("unable to serialize serde_json::Value")
+            .into()
         })
         .expect("unable to build http::Response");
     println!(

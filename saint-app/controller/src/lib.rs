@@ -95,7 +95,12 @@ pub async fn delete_saint(id: Uuid) -> Result<(), SaintMutationError> {
     response
 }
 
-pub async fn get_saints() -> Vec<openapi::saint::Saint> {
+pub async fn get_saints(
+    gender: Option<String>,
+    display_name: Option<String>,
+    offset: Option<u16>,
+    count: Option<u16>,
+) -> Vec<openapi::saint::Saint> {
     let client = db_postgres::connect().await;
 
     let saint_repository = SaintRepository { client };
@@ -103,10 +108,10 @@ pub async fn get_saints() -> Vec<openapi::saint::Saint> {
     let response = domain::interactors::saint_query::SaintQueryInteractor::new(saint_repository)
         .get_saints(SaintQueryRequest {
             id: None,
-            gender: None,
-            display_name: None,
-            offset: None,
-            count: None,
+            gender: gender,
+            display_name: display_name,
+            offset: offset,
+            count: count,
         })
         .await;
     response
