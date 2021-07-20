@@ -1,12 +1,12 @@
 use async_trait::async_trait;
 use domain::boundaries::DbError;
-use tokio_postgres::{Client, Error};
+use tokio_postgres::{Client, Error, Row};
 use uuid::Uuid;
 
 mod mutation;
 mod query;
 
-use domain::boundaries::{SaintDbRequest, SaintDbResponse};
+use domain::boundaries::{SaintCollectionDbResponse, SaintDbRequest, SaintDbResponse};
 
 pub struct SaintRepository {
     pub client: Client,
@@ -21,49 +21,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             return None;
         }
         let row = result.unwrap();
-
-        let id: Option<Uuid>;
-        let english_name: Option<String>;
-        let french_name: Option<String>;
-        let latin_name: Option<String>;
-
-        if let Some(value) = row.get("id") {
-            id = Some(value)
-        } else {
-            id = None
-        };
-        if let Some(value) = row.get("english_name") {
-            english_name = Some(value)
-        } else {
-            english_name = None
-        };
-        if let Some(value) = row.get("french_name") {
-            french_name = Some(value)
-        } else {
-            french_name = None
-        };
-        if let Some(value) = row.get("latin_name") {
-            latin_name = Some(value)
-        } else {
-            latin_name = None
-        };
-        let vietnamese_name: String = row.get("vietnamese_name");
-        let display_name: String = row.get("display_name");
-        let is_male: bool = row.get("is_male");
-        let feast_day: i16 = row.get("feast_day");
-        let feast_month: i16 = row.get("feast_month");
-
-        Some(SaintDbResponse {
-            id,
-            english_name,
-            french_name,
-            latin_name,
-            vietnamese_name,
-            display_name,
-            is_male,
-            feast_day,
-            feast_month,
-        })
+        Some(convert_to_saint_db_response(row))
     }
 
     async fn exists_by_id(&self, id: Uuid) -> bool {
@@ -336,5 +294,72 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             ));
         }
         Ok(())
+    }
+
+    async fn get_collection_saint(
+        &self,
+        is_male: Option<bool>,
+        display_name: Option<String>,
+        offset: Option<u16>,
+        count: Option<u16>,
+    ) -> SaintCollectionDbResponse {
+        let result =
+            query::get_collection(&(*self).client, offset, count, is_male, display_name).await;
+        let collection: Vec<SaintDbResponse>;
+        if result.is_err() {
+            collection = vec![];
+        } else {
+            collection = result
+                .unwrap()
+                .into_iter()
+                .map(|row| convert_to_saint_db_response(row))
+                .collect();
+        }
+        SaintCollectionDbResponse { collection }
+    }
+}
+
+fn convert_to_saint_db_response(row: Row) -> SaintDbResponse {
+    let id: Option<Uuid>;
+    let english_name: Option<String>;
+    let french_name: Option<String>;
+    let latin_name: Option<String>;
+
+    if let Some(value) = row.get("id") {
+        id = Some(value)
+    } else {
+        id = None
+    };
+    if let Some(value) = row.get("english_name") {
+        english_name = Some(value)
+    } else {
+        english_name = None
+    };
+    if let Some(value) = row.get("french_name") {
+        french_name = Some(value)
+    } else {
+        french_name = None
+    };
+    if let Some(value) = row.get("latin_name") {
+        latin_name = Some(value)
+    } else {
+        latin_name = None
+    };
+    let vietnamese_name: String = row.get("vietnamese_name");
+    let display_name: String = row.get("display_name");
+    let is_male: bool = row.get("is_male");
+    let feast_day: i16 = row.get("feast_day");
+    let feast_month: i16 = row.get("feast_month");
+
+    SaintDbResponse {
+        id,
+        english_name,
+        french_name,
+        latin_name,
+        vietnamese_name,
+        display_name,
+        is_male,
+        feast_day,
+        feast_month,
     }
 }
