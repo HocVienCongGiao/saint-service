@@ -48,29 +48,6 @@ async fn integration_works() {
 }
 
 #[tokio::test]
-async fn test_get_saints() {
-    initialise();
-    println!("is it working?");
-
-    let request = http::Request::builder()
-        .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints?count=20")
-        .method("GET")
-        .header("Content-Type", "application/json")
-        .body(Body::Empty)
-        .unwrap();
-
-    let expected =
-            "[{\"id\":\"40e6215d-b5c6-4896-987c-f30f3678f608\",\"displayName\":\"Phêrô\",\"englishName\":\"Peter the Apostle\",\"frenchName\":\"saint Pierre\",\"latinName\":\"Simon Petrus\",\"vietnameseName\":\"Thánh Phêrô Tông đồ\",\"gender\":\"MALE\",\"feastDay\":\"29-06\"}]"
-        .into_response();
-
-    let response = saint::saint(request, Context::default())
-        .await
-        .expect("expected Ok(_) value")
-        .into_response();
-    assert_eq!(response.body(), expected.body())
-}
-
-#[tokio::test]
 async fn save_test() {
     initialise();
     println!("is it working?");
@@ -348,4 +325,33 @@ async fn delete_test() {
         .into_response();
 
     assert_eq!(response.status(), 404)
+}
+
+#[tokio::test]
+async fn test_get_saints() {
+    initialise();
+    println!("is it working?");
+
+    let request = http::Request::builder()
+        .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints?count=20")
+        .method("GET")
+        .header("Content-Type", "application/json")
+        .body(Body::Empty)
+        .unwrap();
+
+    let response = saint::saint(request, Context::default())
+        .await
+        .expect("expected Ok(_) value")
+        .into_response();
+
+    let collection_saint: Vec<Saint>;
+    if let Body::Text(body) = response.body() {
+        collection_saint = serde_json::from_str(body).expect("Unable deserialise response body");
+    } else {
+        collection_saint = vec![];
+    }
+
+    println!("{:?}", collection_saint);
+
+    assert!(!collection_saint.is_empty())
 }
