@@ -70,7 +70,6 @@ async fn test_get_saints() {
     assert_eq!(response.body(), expected.body())
 }
 
-
 #[tokio::test]
 async fn save_test() {
     initialise();
@@ -350,4 +349,3 @@ async fn delete_test() {
 
     assert_eq!(response.status(), 404)
 }
-
