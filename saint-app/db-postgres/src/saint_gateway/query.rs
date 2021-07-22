@@ -20,19 +20,32 @@ pub async fn get_collection(
     is_male: Option<bool>,
     display_name: Option<String>,
 ) -> Result<Vec<Row>, Error> {
-    let statement = format!(
-        "SELECT * FROM saint__saint_view \
-        WHERE display_name LIKE {} AND is_male IN ({}) \
+    let display_name = display_name
+        .map(|value| format!("%{}%", value))
+        .unwrap_or("%".to_string());
+    let count = count
+        .map(|value| value.to_string())
+        .unwrap_or("ALL".to_string());
+    let offset = offset.unwrap_or(0);
+    let statement: String;
+    if is_male.is_some() {
+        statement = format!(
+            "SELECT * FROM saint__saint_view \
+        WHERE display_name LIKE '{}' AND is_male is {} \
         LIMIT {} OFFSET {}",
-        display_name.unwrap_or("\'%\'".to_string()),
-        is_male
-            .map(|value| value.to_string())
-            .unwrap_or("TRUE, FALSE".to_string()),
-        count
-            .map(|value| value.to_string())
-            .unwrap_or("ALL".to_string()),
-        offset.unwrap_or(0)
-    );
+            display_name,
+            is_male.unwrap(),
+            count,
+            offset
+        );
+    } else {
+        statement = format!(
+            "SELECT * FROM saint__saint_view \
+        WHERE display_name LIKE '{}' \
+        LIMIT {} OFFSET {}",
+            display_name, count, offset
+        );
+    }
     println!("statement = {}", statement);
     let stmt = (*client).prepare(&statement).await.unwrap();
 

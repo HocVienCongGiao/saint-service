@@ -296,7 +296,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         Ok(())
     }
 
-    async fn get_collection_saint(
+    async fn get_saint_collection(
         &self,
         is_male: Option<bool>,
         display_name: Option<String>,

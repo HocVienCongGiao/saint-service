@@ -41,7 +41,7 @@ where
         let result =
             ((*self)
                 .db_gateway
-                .get_collection_saint(is_male, display_name, offset, count))
+                .get_saint_collection(is_male, display_name, offset, count))
             .await;
         let collection = result
             .collection

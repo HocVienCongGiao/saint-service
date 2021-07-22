@@ -44,6 +44,7 @@ struct TokenPayload {
 #[derive(Deserialize, Serialize)]
 pub struct SaintQuery {
     gender: Option<String>,
+    #[serde(rename(deserialize = "displayName"))]
     display_name: Option<String>,
     offset: Option<u16>,
     count: Option<u16>,
@@ -52,6 +53,7 @@ pub struct SaintQuery {
 pub fn get_query_from_uri(uri: &Uri) -> SaintQuery {
     let query = uri.query();
     if let Some(saint_query) = query {
+        println!("query: {:?}", saint_query);
         serde_qs::from_str::<SaintQuery>(saint_query).unwrap()
     } else {
         SaintQuery {
