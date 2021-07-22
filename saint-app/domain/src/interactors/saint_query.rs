@@ -1,5 +1,8 @@
 use crate::boundaries;
-use crate::boundaries::{SaintDbGateway, SaintDbResponse, SaintQueryRequest, SaintQueryResponse};
+use crate::boundaries::{
+    SaintCollectionQueryResponse, SaintDbGateway, SaintDbResponse, SaintQueryRequest,
+    SaintQueryResponse,
+};
 use async_trait::async_trait;
 
 pub struct SaintQueryInteractor<A: SaintDbGateway> {
@@ -12,14 +15,41 @@ where
     A: SaintDbGateway + Sync + Send,
 {
     async fn get_saint(&self, request: SaintQueryRequest) -> Option<SaintQueryResponse> {
-        println!("saint mutation input boundary {}", request.id);
+        println!(
+            "saint query input boundary {}",
+            request.id.unwrap().to_hyphenated()
+        );
 
-        if let Some(db_response) = ((*self).db_gateway.find_by_id(request.id.clone())).await {
+        if let Some(db_response) = ((*self).db_gateway.find_by_id(request.id.unwrap())).await {
             println!("saint found");
             return Some(db_response.to_saint_query_response());
         } else {
             println!("saint not found");
             return None;
+        }
+    }
+
+    async fn get_saints(&self, request: SaintQueryRequest) -> SaintCollectionQueryResponse {
+        println!("saint query input boundary");
+        let is_male = request
+            .gender
+            .map(|value| if value.eq("MALE") { true } else { false });
+        let display_name = request.display_name;
+        let offset = request.offset;
+        let count = request.count;
+
+        let result =
+            ((*self)
+                .db_gateway
+                .get_saint_collection(is_male, display_name, offset, count))
+            .await;
+        let collection = result
+            .collection
+            .into_iter()
+            .map(|saint_db_response| saint_db_response.to_saint_query_response())
+            .collect();
+        SaintCollectionQueryResponse {
+            collection: collection,
         }
     }
 }

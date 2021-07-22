@@ -4,6 +4,7 @@ use uuid::Uuid;
 #[async_trait]
 pub trait SaintQueryInputBoundary {
     async fn get_saint(&self, request: SaintQueryRequest) -> Option<SaintQueryResponse>;
+    async fn get_saints(&self, request: SaintQueryRequest) -> SaintCollectionQueryResponse;
 }
 
 #[async_trait]
@@ -30,7 +31,11 @@ pub struct SaintMutationRequest {
     pub feast_day: Option<String>,
 }
 pub struct SaintQueryRequest {
-    pub id: Uuid,
+    pub id: Option<Uuid>,
+    pub gender: Option<String>,
+    pub display_name: Option<String>,
+    pub offset: Option<u16>,
+    pub count: Option<u16>,
 }
 pub struct SaintDbRequest {
     pub id: Option<Uuid>,
@@ -76,6 +81,14 @@ pub struct SaintDbResponse {
     pub feast_month: i16,
 }
 
+pub struct SaintCollectionQueryResponse {
+    pub collection: Vec<SaintQueryResponse>,
+}
+
+pub struct SaintCollectionDbResponse {
+    pub collection: Vec<SaintDbResponse>,
+}
+
 pub trait MutationOutputBoundary {}
 
 #[async_trait]
@@ -85,6 +98,13 @@ pub trait SaintDbGateway {
     async fn insert(&self, db_request: SaintDbRequest) -> Result<(), DbError>;
     async fn update(&self, db_request: SaintDbRequest) -> Result<(), DbError>;
     async fn delete(&self, id: Uuid) -> Result<(), DbError>;
+    async fn get_saint_collection(
+        &self,
+        is_male: Option<bool>,
+        display_name: Option<String>,
+        offset: Option<u16>,
+        count: Option<u16>,
+    ) -> SaintCollectionDbResponse;
 }
 
 #[derive(Debug)]

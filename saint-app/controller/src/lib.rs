@@ -15,7 +15,13 @@ pub async fn get_saint(id: Uuid) -> Option<openapi::saint::Saint> {
     let saint_repository = SaintRepository { client };
 
     let response = domain::interactors::saint_query::SaintQueryInteractor::new(saint_repository)
-        .get_saint(SaintQueryRequest { id: id.clone() })
+        .get_saint(SaintQueryRequest {
+            id: Some(id),
+            gender: None,
+            display_name: None,
+            offset: None,
+            count: None,
+        })
         .await;
     if response.is_none() {
         return None;
@@ -87,6 +93,32 @@ pub async fn delete_saint(id: Uuid) -> Result<(), SaintMutationError> {
             })
             .await;
     response
+}
+
+pub async fn get_saints(
+    gender: Option<String>,
+    display_name: Option<String>,
+    offset: Option<u16>,
+    count: Option<u16>,
+) -> Vec<openapi::saint::Saint> {
+    let client = db_postgres::connect().await;
+
+    let saint_repository = SaintRepository { client };
+
+    let response = domain::interactors::saint_query::SaintQueryInteractor::new(saint_repository)
+        .get_saints(SaintQueryRequest {
+            id: None,
+            gender: gender,
+            display_name: display_name,
+            offset: offset,
+            count: count,
+        })
+        .await;
+    response
+        .collection
+        .into_iter()
+        .map(|saint_query_response| saint_query_response.to_openapi())
+        .collect()
 }
 
 #[cfg(test)]

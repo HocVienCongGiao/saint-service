@@ -41,6 +41,30 @@ struct TokenPayload {
 }
 */
 
+#[derive(Deserialize, Serialize)]
+pub struct SaintQuery {
+    gender: Option<String>,
+    #[serde(rename(deserialize = "displayName"))]
+    display_name: Option<String>,
+    offset: Option<u16>,
+    count: Option<u16>,
+}
+
+pub fn get_query_from_uri(uri: &Uri) -> SaintQuery {
+    let query = uri.query();
+    if let Some(saint_query) = query {
+        println!("query: {:?}", saint_query);
+        serde_qs::from_str::<SaintQuery>(saint_query).unwrap()
+    } else {
+        SaintQuery {
+            gender: None,
+            display_name: None,
+            offset: None,
+            count: None,
+        }
+    }
+}
+
 pub fn get_id_from_uri(uri: &Uri) -> Option<uuid::Uuid> {
     let uri_path = std::path::Path::new(uri.path());
     if !uri_path.ends_with("saints") {
@@ -102,10 +126,13 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
     );
 
     let saint_response: Option<controller::openapi::saint::Saint>;
+    let saint_collection: Vec<Saint>;
+    let mut is_get_saints = false;
     let status_code: u16;
     match *req.method() {
         method::Method::GET => {
             if let Some(id) = get_id_from_uri(req.uri()) {
+                saint_collection = vec![];
                 saint_response = controller::get_saint(id).await;
                 if saint_response.is_none() {
                     status_code = 404;
@@ -113,12 +140,20 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                     status_code = 200;
                 }
             } else {
-                // get_saints();
+                let query = get_query_from_uri(req.uri());
+                let gender: Option<String> = query.gender;
+                let display_name: Option<String> = query.display_name;
+                let offset: Option<u16> = query.offset;
+                let count: Option<u16> = query.count;
+                saint_collection =
+                    controller::get_saints(gender, display_name, offset, count).await;
+                is_get_saints = true;
                 saint_response = None;
-                status_code = 404;
+                status_code = 200;
             }
         }
         method::Method::POST => {
+            saint_collection = vec![];
             if let Some(value) = req.payload().unwrap_or(None) {
                 let lambda_saint_request: Saint = value;
                 let serialized_saint = serde_json::to_string(&lambda_saint_request).unwrap();
@@ -142,6 +177,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         method::Method::PUT => {
+            saint_collection = vec![];
             let id = get_id_from_uri(req.uri());
             let value = req.payload().unwrap_or(None);
             if id.is_some() && value.is_some() {
@@ -167,6 +203,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         method::Method::DELETE => {
+            saint_collection = vec![];
             saint_response = None;
             if let Some(id) = get_id_from_uri(req.uri()) {
                 let result = controller::delete_saint(id).await;
@@ -183,6 +220,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         _ => {
+            saint_collection = vec![];
             saint_response = None;
             status_code = 404;
         }
@@ -194,12 +232,16 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
         .header(ACCESS_CONTROL_ALLOW_METHODS, "*")
         .status(status_code)
-        .body(if saint_response.is_none() {
+        .body(if saint_response.is_none() && saint_collection.is_empty() {
             Body::Empty
         } else {
-            serde_json::to_string(&saint_response)
-                .expect("unable to serialize serde_json::Value")
-                .into()
+            if is_get_saints {
+                serde_json::to_string(&saint_collection)
+            } else {
+                serde_json::to_string(&saint_response)
+            }
+            .expect("unable to serialize serde_json::Value")
+            .into()
         })
         .expect("unable to build http::Response");
     println!(
