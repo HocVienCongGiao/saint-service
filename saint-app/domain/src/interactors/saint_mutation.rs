@@ -105,7 +105,10 @@ where
         }
     }
 
-    async fn delete_saint(&self, request: SaintMutationRequest) -> Result<(), SaintMutationError> {
+    async fn delete_saint(
+        &mut self,
+        request: SaintMutationRequest,
+    ) -> Result<(), SaintMutationError> {
         let id = request.id.unwrap();
         println!("saint mutation input boundary {}", id);
 
