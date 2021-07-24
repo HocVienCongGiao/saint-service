@@ -1,5 +1,5 @@
 use tokio_postgres::types::ToSql;
-use tokio_postgres::{Transaction, Client, Error, Row};
+use tokio_postgres::{Client, Error, Row, Transaction};
 use uuid::Uuid;
 
 pub(crate) async fn save_id(transaction: &Transaction<'_>, id: Uuid) -> Result<u64, Error> {
@@ -30,7 +30,11 @@ pub(crate) async fn save_name(
     transaction.execute(&stmt, params).await
 }
 
-pub(crate) async fn save_gender(transaction: &Transaction<'_>, id: Uuid, is_male: bool) -> Result<u64, Error> {
+pub(crate) async fn save_gender(
+    transaction: &Transaction<'_>,
+    id: Uuid,
+    is_male: bool,
+) -> Result<u64, Error> {
     let stmt = (*transaction)
         .prepare("INSERT into public.saint__saint_gender (id, is_male) VALUES ($1, $2)")
         .await

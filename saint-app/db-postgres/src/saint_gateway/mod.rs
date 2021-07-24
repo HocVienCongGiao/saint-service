@@ -39,10 +39,10 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         id_found.unwrap() == id
     }
 
-    async fn insert(&self, db_request: SaintDbRequest) -> Result<(), DbError> {
+    async fn insert(&mut self, db_request: SaintDbRequest) -> Result<(), DbError> {
         let mut result: Result<u64, Error>;
 
-        let transaction = &(*self).client.transaction().await.unwrap();
+        let transaction = (*self).client.transaction().await.unwrap();
 
         let id = db_request.id.unwrap();
         result = mutation::save_id(&transaction, id.clone()).await;
@@ -140,11 +140,12 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
                 error.into_source().unwrap().to_string(),
             ));
         }
+
         transaction.commit().await.unwrap();
         Ok(())
     }
 
-    async fn update(&self, db_request: SaintDbRequest) -> Result<(), DbError> {
+    async fn update(&mut self, db_request: SaintDbRequest) -> Result<(), DbError> {
         let mut result: Result<u64, Error>;
 
         let id = db_request.id.unwrap();

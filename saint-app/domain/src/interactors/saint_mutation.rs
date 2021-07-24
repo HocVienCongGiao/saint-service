@@ -17,7 +17,7 @@ where
     A: SaintDbGateway + Sync + Send,
 {
     async fn create_saint(
-        &self,
+        &mut self,
         request: SaintMutationRequest,
     ) -> Result<SaintMutationResponse, SaintMutationError> {
         println!("saint mutation input boundary: creating");
@@ -66,7 +66,7 @@ where
     }
 
     async fn update_saint(
-        &self,
+        &mut self,
         request: SaintMutationRequest,
     ) -> Result<SaintMutationResponse, SaintMutationError> {
         if request.id.is_none() {
