@@ -42,7 +42,11 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
     async fn insert(&mut self, db_request: SaintDbRequest) -> Result<(), DbError> {
         let mut result: Result<u64, Error>;
 
-        let transaction = (*self).client.transaction().await.unwrap();
+        let transaction = (*self).client.transaction().await.or_else(|error| {
+            Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ))
+        })?;
 
         let id = db_request.id.unwrap();
         result = mutation::save_id(&transaction, id.clone()).await;
@@ -141,14 +145,20 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             ));
         }
 
-        transaction.commit().await.unwrap();
-        Ok(())
+        transaction
+            .commit()
+            .await
+            .map_err(|error| DbError::UnknownError(error.into_source().unwrap().to_string()))
     }
 
     async fn update(&mut self, db_request: SaintDbRequest) -> Result<(), DbError> {
         let mut result: Result<u64, Error>;
 
-        let transaction = (*self).client.transaction().await.unwrap();
+        let transaction = (*self).client.transaction().await.or_else(|error| {
+            Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ))
+        })?;
 
         let id = db_request.id.unwrap();
 
@@ -241,14 +251,20 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
                 error.into_source().unwrap().to_string(),
             ));
         }
-        transaction.commit().await.unwrap();
-        Ok(())
+        transaction
+            .commit()
+            .await
+            .map_err(|error| DbError::UnknownError(error.into_source().unwrap().to_string()))
     }
 
     async fn delete(&mut self, id: Uuid) -> Result<(), DbError> {
         let mut result: Result<u64, Error>;
 
-        let transaction = (*self).client.transaction().await.unwrap();
+        let transaction = (*self).client.transaction().await.or_else(|error| {
+            Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ))
+        })?;
 
         result = mutation::delete_name(&transaction, id.clone(), "display_name".to_string()).await;
         if let Err(error) = result {
@@ -299,8 +315,10 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
                 error.into_source().unwrap().to_string(),
             ));
         }
-        transaction.commit().await.unwrap();
-        Ok(())
+        transaction
+            .commit()
+            .await
+            .map_err(|error| DbError::UnknownError(error.into_source().unwrap().to_string()))
     }
 
     async fn get_saint_collection(
