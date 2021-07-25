@@ -39,11 +39,17 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         id_found.unwrap() == id
     }
 
-    async fn insert(&self, db_request: SaintDbRequest) -> Result<(), DbError> {
+    async fn insert(&mut self, db_request: SaintDbRequest) -> Result<(), DbError> {
         let mut result: Result<u64, Error>;
 
+        let transaction = (*self).client.transaction().await.or_else(|error| {
+            Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ))
+        })?;
+
         let id = db_request.id.unwrap();
-        result = mutation::save_id(&(*self).client, id.clone()).await;
+        result = mutation::save_id(&transaction, id.clone()).await;
         if let Err(error) = result {
             return Err(DbError::UnknownError(
                 error.into_source().unwrap().to_string(),
@@ -51,7 +57,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         }
         let display_name = db_request.display_name.unwrap();
         result = mutation::save_name(
-            &(*self).client,
+            &transaction,
             id.clone(),
             "display_name".to_string(),
             display_name.clone(),
@@ -64,7 +70,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         }
         if let Some(english_name) = db_request.english_name {
             result = mutation::save_name(
-                &(*self).client,
+                &transaction,
                 id.clone(),
                 "english_name".to_string(),
                 english_name.clone(),
@@ -78,7 +84,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         }
         if let Some(french_name) = db_request.french_name {
             result = mutation::save_name(
-                &(*self).client,
+                &transaction,
                 id.clone(),
                 "french_name".to_string(),
                 french_name.clone(),
@@ -92,7 +98,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         }
         if let Some(latin_name) = db_request.latin_name {
             result = mutation::save_name(
-                &(*self).client,
+                &transaction,
                 id.clone(),
                 "latin_name".to_string(),
                 latin_name.clone(),
@@ -106,7 +112,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         }
         let vietnamese_name = db_request.vietnamese_name.unwrap();
         result = mutation::save_name(
-            &(*self).client,
+            &transaction,
             id.clone(),
             "vietnamese_name".to_string(),
             vietnamese_name.clone(),
@@ -118,7 +124,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             ));
         }
         let is_male = db_request.is_male.unwrap();
-        result = mutation::save_gender(&(*self).client, id.clone(), is_male.clone()).await;
+        result = mutation::save_gender(&transaction, id.clone(), is_male.clone()).await;
         if let Err(error) = result {
             return Err(DbError::UnknownError(
                 error.into_source().unwrap().to_string(),
@@ -127,7 +133,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         let feast_day = db_request.feast_day.unwrap();
         let feast_month = db_request.feast_month.unwrap();
         result = mutation::save_feast_day(
-            &(*self).client,
+            &transaction,
             id.clone(),
             feast_day.clone(),
             feast_month.clone(),
@@ -138,17 +144,27 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
                 error.into_source().unwrap().to_string(),
             ));
         }
-        Ok(())
+
+        transaction
+            .commit()
+            .await
+            .map_err(|error| DbError::UnknownError(error.into_source().unwrap().to_string()))
     }
 
-    async fn update(&self, db_request: SaintDbRequest) -> Result<(), DbError> {
+    async fn update(&mut self, db_request: SaintDbRequest) -> Result<(), DbError> {
         let mut result: Result<u64, Error>;
+
+        let transaction = (*self).client.transaction().await.or_else(|error| {
+            Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ))
+        })?;
 
         let id = db_request.id.unwrap();
 
         let display_name = db_request.display_name.unwrap();
         result = mutation::update_name(
-            &(*self).client,
+            &transaction,
             id.clone(),
             "display_name".to_string(),
             display_name.clone(),
@@ -161,7 +177,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         }
         if let Some(english_name) = db_request.english_name {
             result = mutation::update_name(
-                &(*self).client,
+                &transaction,
                 id.clone(),
                 "english_name".to_string(),
                 english_name.clone(),
@@ -175,7 +191,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         }
         if let Some(french_name) = db_request.french_name {
             result = mutation::update_name(
-                &(*self).client,
+                &transaction,
                 id.clone(),
                 "french_name".to_string(),
                 french_name.clone(),
@@ -189,7 +205,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         }
         if let Some(latin_name) = db_request.latin_name {
             result = mutation::update_name(
-                &(*self).client,
+                &transaction,
                 id.clone(),
                 "latin_name".to_string(),
                 latin_name.clone(),
@@ -203,7 +219,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         }
         let vietnamese_name = db_request.vietnamese_name.unwrap();
         result = mutation::update_name(
-            &(*self).client,
+            &transaction,
             id.clone(),
             "vietnamese_name".to_string(),
             vietnamese_name.clone(),
@@ -215,7 +231,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             ));
         }
         let is_male = db_request.is_male.unwrap();
-        result = mutation::update_gender(&(*self).client, id.clone(), is_male.clone()).await;
+        result = mutation::update_gender(&transaction, id.clone(), is_male.clone()).await;
         if let Err(error) = result {
             return Err(DbError::UnknownError(
                 error.into_source().unwrap().to_string(),
@@ -224,7 +240,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         let feast_day = db_request.feast_day.unwrap();
         let feast_month = db_request.feast_month.unwrap();
         result = mutation::update_feast_day(
-            &(*self).client,
+            &transaction,
             id.clone(),
             feast_day.clone(),
             feast_month.clone(),
@@ -235,65 +251,74 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
                 error.into_source().unwrap().to_string(),
             ));
         }
-        Ok(())
+        transaction
+            .commit()
+            .await
+            .map_err(|error| DbError::UnknownError(error.into_source().unwrap().to_string()))
     }
 
-    async fn delete(&self, id: Uuid) -> Result<(), DbError> {
+    async fn delete(&mut self, id: Uuid) -> Result<(), DbError> {
         let mut result: Result<u64, Error>;
 
-        result =
-            mutation::delete_name(&(*self).client, id.clone(), "display_name".to_string()).await;
+        let transaction = (*self).client.transaction().await.or_else(|error| {
+            Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ))
+        })?;
+
+        result = mutation::delete_name(&transaction, id.clone(), "display_name".to_string()).await;
+        if let Err(error) = result {
+            return Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ));
+        }
+        result = mutation::delete_name(&transaction, id.clone(), "english_name".to_string()).await;
+        if let Err(error) = result {
+            return Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ));
+        }
+        result = mutation::delete_name(&transaction, id.clone(), "french_name".to_string()).await;
+        if let Err(error) = result {
+            return Err(DbError::UnknownError(
+                error.into_source().unwrap().to_string(),
+            ));
+        }
+        result = mutation::delete_name(&transaction, id.clone(), "latin_name".to_string()).await;
         if let Err(error) = result {
             return Err(DbError::UnknownError(
                 error.into_source().unwrap().to_string(),
             ));
         }
         result =
-            mutation::delete_name(&(*self).client, id.clone(), "english_name".to_string()).await;
+            mutation::delete_name(&transaction, id.clone(), "vietnamese_name".to_string()).await;
         if let Err(error) = result {
             return Err(DbError::UnknownError(
                 error.into_source().unwrap().to_string(),
             ));
         }
-        result =
-            mutation::delete_name(&(*self).client, id.clone(), "french_name".to_string()).await;
+        result = mutation::delete_gender(&transaction, id.clone()).await;
         if let Err(error) = result {
             return Err(DbError::UnknownError(
                 error.into_source().unwrap().to_string(),
             ));
         }
-        result = mutation::delete_name(&(*self).client, id.clone(), "latin_name".to_string()).await;
+        result = mutation::delete_feast_day(&transaction, id.clone()).await;
         if let Err(error) = result {
             return Err(DbError::UnknownError(
                 error.into_source().unwrap().to_string(),
             ));
         }
-        result =
-            mutation::delete_name(&(*self).client, id.clone(), "vietnamese_name".to_string()).await;
+        result = mutation::delete_id(&transaction, id.clone()).await;
         if let Err(error) = result {
             return Err(DbError::UnknownError(
                 error.into_source().unwrap().to_string(),
             ));
         }
-        result = mutation::delete_gender(&(*self).client, id.clone()).await;
-        if let Err(error) = result {
-            return Err(DbError::UnknownError(
-                error.into_source().unwrap().to_string(),
-            ));
-        }
-        result = mutation::delete_feast_day(&(*self).client, id.clone()).await;
-        if let Err(error) = result {
-            return Err(DbError::UnknownError(
-                error.into_source().unwrap().to_string(),
-            ));
-        }
-        result = mutation::delete_id(&(*self).client, id.clone()).await;
-        if let Err(error) = result {
-            return Err(DbError::UnknownError(
-                error.into_source().unwrap().to_string(),
-            ));
-        }
-        Ok(())
+        transaction
+            .commit()
+            .await
+            .map_err(|error| DbError::UnknownError(error.into_source().unwrap().to_string()))
     }
 
     async fn get_saint_collection(

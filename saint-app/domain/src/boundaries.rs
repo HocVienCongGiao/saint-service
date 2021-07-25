@@ -10,14 +10,17 @@ pub trait SaintQueryInputBoundary {
 #[async_trait]
 pub trait SaintMutationInputBoundary {
     async fn create_saint(
-        &self,
+        &mut self,
         request: SaintMutationRequest,
     ) -> Result<SaintMutationResponse, SaintMutationError>;
     async fn update_saint(
-        &self,
+        &mut self,
         request: SaintMutationRequest,
     ) -> Result<SaintMutationResponse, SaintMutationError>;
-    async fn delete_saint(&self, request: SaintMutationRequest) -> Result<(), SaintMutationError>;
+    async fn delete_saint(
+        &mut self,
+        request: SaintMutationRequest,
+    ) -> Result<(), SaintMutationError>;
 }
 
 pub struct SaintMutationRequest {
@@ -95,9 +98,9 @@ pub trait MutationOutputBoundary {}
 pub trait SaintDbGateway {
     async fn find_by_id(&self, id: Uuid) -> Option<SaintDbResponse>;
     async fn exists_by_id(&self, id: Uuid) -> bool;
-    async fn insert(&self, db_request: SaintDbRequest) -> Result<(), DbError>;
-    async fn update(&self, db_request: SaintDbRequest) -> Result<(), DbError>;
-    async fn delete(&self, id: Uuid) -> Result<(), DbError>;
+    async fn insert(&mut self, db_request: SaintDbRequest) -> Result<(), DbError>;
+    async fn update(&mut self, db_request: SaintDbRequest) -> Result<(), DbError>;
+    async fn delete(&mut self, id: Uuid) -> Result<(), DbError>;
     async fn get_saint_collection(
         &self,
         is_male: Option<bool>,
