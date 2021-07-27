@@ -333,7 +333,7 @@ async fn test_get_saints() {
     println!("is it working?");
 
     let request = http::Request::builder()
-        .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints?count=20")
+        .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints?")
         .method("GET")
         .header("Content-Type", "application/json")
         .body(Body::Empty)
@@ -350,8 +350,29 @@ async fn test_get_saints() {
     } else {
         collection_saint = vec![];
     }
-
     println!("{:?}", collection_saint);
 
-    assert!(!collection_saint.is_empty())
+    assert!(!collection_saint.is_empty());
+
+    let request = http::Request::builder()
+        .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints?displayName=notexist")
+        .method("GET")
+        .header("Content-Type", "application/json")
+        .body(Body::Empty)
+        .unwrap();
+
+    let response = saint::saint(request, Context::default())
+        .await
+        .expect("expected Ok(_) value")
+        .into_response();
+
+    let collection_saint: Vec<Saint>;
+    if let Body::Text(body) = response.body() {
+        collection_saint = serde_json::from_str(body).expect("Unable deserialise response body");
+    } else {
+        collection_saint = vec![];
+    }
+    println!("{:?}", collection_saint);
+
+    assert!(collection_saint.is_empty());
 }
