@@ -61,7 +61,7 @@ pub fn get_query_from_request(req: &Request) -> SaintQuery {
 pub fn get_id_from_request(req: &Request) -> Option<uuid::Uuid> {
     let path_parameters = req.path_parameters();
     let id_param = path_parameters.get("id");
-    if let Some(id) =  id_param {
+    if let Some(id) = id_param {
         println!("id found");
         Some(uuid::Uuid::parse_str(id).unwrap())
     } else {
