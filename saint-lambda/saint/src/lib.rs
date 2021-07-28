@@ -41,36 +41,29 @@ struct TokenPayload {
 }
 */
 
-#[derive(Deserialize, Serialize)]
 pub struct SaintQuery {
     gender: Option<String>,
-    #[serde(rename(deserialize = "displayName"))]
     display_name: Option<String>,
     offset: Option<u16>,
     count: Option<u16>,
 }
 
-pub fn get_query_from_uri(uri: &Uri) -> SaintQuery {
-    let query = uri.query();
-    if let Some(saint_query) = query {
-        println!("query: {:?}", saint_query);
-        serde_qs::from_str::<SaintQuery>(saint_query).unwrap()
-    } else {
-        SaintQuery {
-            gender: None,
-            display_name: None,
-            offset: None,
-            count: None,
-        }
+pub fn get_query_from_request(req: &Request) -> SaintQuery {
+    let query = req.query_string_parameters();
+    SaintQuery {
+        gender: query.get("gender").map(|str| str.to_string()),
+        display_name: query.get("displayName").map(|str| str.to_string()),
+        offset: query.get("offset").map(|str| str.parse().unwrap()),
+        count: query.get("count").map(|str| str.parse().unwrap()),
     }
 }
 
-pub fn get_id_from_uri(uri: &Uri) -> Option<uuid::Uuid> {
-    let uri_path = std::path::Path::new(uri.path());
-    if !uri_path.ends_with("saints") {
+pub fn get_id_from_request(req: &Request) -> Option<uuid::Uuid> {
+    let path_parameters = req.path_parameters();
+    let id_param = path_parameters.get("id");
+    if let Some(id) = id_param {
         println!("id found");
-        let id_str = uri_path.file_name().unwrap().to_str().unwrap();
-        Some(uuid::Uuid::parse_str(id_str).unwrap())
+        Some(uuid::Uuid::parse_str(id).unwrap())
     } else {
         println!("id not found");
         None
@@ -133,7 +126,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
     let status_code: u16;
     match *req.method() {
         method::Method::GET => {
-            if let Some(id) = get_id_from_uri(req.uri()) {
+            if let Some(id) = get_id_from_request(&req) {
                 saint_collection = vec![];
                 saint_response = controller::get_saint(id).await;
                 if saint_response.is_none() {
@@ -142,7 +135,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                     status_code = 200;
                 }
             } else {
-                let query = get_query_from_uri(req.uri());
+                let query = get_query_from_request(&req);
                 let gender: Option<String> = query.gender;
                 let display_name: Option<String> = query.display_name;
                 let offset: Option<u16> = query.offset;
@@ -180,7 +173,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         }
         method::Method::PUT => {
             saint_collection = vec![];
-            let id = get_id_from_uri(req.uri());
+            let id = get_id_from_request(&req);
             let value = req.payload().unwrap_or(None);
             if id.is_some() && value.is_some() {
                 let lambda_saint_request: Saint = value.unwrap();
@@ -207,7 +200,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         method::Method::DELETE => {
             saint_collection = vec![];
             saint_response = None;
-            if let Some(id) = get_id_from_uri(req.uri()) {
+            if let Some(id) = get_id_from_request(&req) {
                 let result = controller::delete_saint(id).await;
                 match result {
                     Ok(_) => status_code = 204,
