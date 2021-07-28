@@ -4,9 +4,12 @@ use lambda_http::http::header::{
     CONTENT_TYPE,
 };
 use lambda_http::http::HeaderValue;
-use lambda_http::{handler, http, lambda_runtime, Body, Context, IntoResponse, Request, Response};
+use lambda_http::{
+    handler, http, lambda_runtime, Body, Context, IntoResponse, Request, RequestExt, Response,
+};
 use saint::saint;
 use serde_json::json;
+use std::collections::HashMap;
 
 type Error = Box<dyn std::error::Error + Sync + Send + 'static>;
 
@@ -29,12 +32,18 @@ async fn integration_works() {
     initialise();
     println!("is it working?");
 
+    let mut path_param = HashMap::new();
+    path_param.insert(
+        "id".to_string(),
+        vec!["40e6215d-b5c6-4896-987c-f30f3678f608".to_string()],
+    );
     let request = http::Request::builder()
         .uri("http://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints/40e6215d-b5c6-4896-987c-f30f3678f608")
         .method("GET")
         .header("Content-Type", "application/json")
         .body(Body::Empty)
-        .unwrap();
+        .unwrap()
+        .with_path_parameters(path_param);
 
     let expected =
             "{\"id\":\"40e6215d-b5c6-4896-987c-f30f3678f608\",\"displayName\":\"Phêrô\",\"englishName\":\"Peter the Apostle\",\"frenchName\":\"saint Pierre\",\"latinName\":\"Simon Petrus\",\"vietnameseName\":\"Thánh Phêrô Tông đồ\",\"gender\":\"MALE\",\"feastDay\":\"29-06\"}"
@@ -150,12 +159,18 @@ async fn put_test() {
 
     let serialized_saint = serde_json::to_string(&saint_request).unwrap();
 
+    let mut path_param = HashMap::new();
+    path_param.insert(
+        "id".to_string(),
+        vec!["00000000-0000-0000-0000-000000000000".to_string()],
+    );
     let request = http::Request::builder()
         .uri("https://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saints/00000000-0000-0000-0000-000000000000")
         .method("PUT")
         .header("Content-Type", "application/json")
         .body(Body::from(serialized_saint))
-        .unwrap();
+        .unwrap()
+        .with_path_parameters(path_param);
 
     let response = saint::saint(request, Context::default())
         .await
@@ -209,12 +224,18 @@ async fn put_test() {
         "http://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saints/{}",
         save_id.unwrap().to_hyphenated()
     );
+    let mut path_param = HashMap::new();
+    path_param.insert(
+        "id".to_string(),
+        vec![save_id.unwrap().to_hyphenated().to_string()],
+    );
     let request = http::Request::builder()
         .uri(uri)
         .method("PUT")
         .header("Content-Type", "application/json")
         .body(Body::from(serialized_saint))
-        .unwrap();
+        .unwrap()
+        .with_path_parameters(path_param);
 
     let response = saint::saint(request, Context::default())
         .await
@@ -295,12 +316,18 @@ async fn delete_test() {
         "http://dev-sg.portal.hocvienconggiao.com/mutation-api/saint-service/saints/{}",
         save_id.unwrap().to_hyphenated()
     );
+    let mut path_param = HashMap::new();
+    path_param.insert(
+        "id".to_string(),
+        vec![save_id.unwrap().to_hyphenated().to_string()],
+    );
     let request = http::Request::builder()
         .uri(uri)
         .method("DELETE")
         .header("Content-Type", "application/json")
         .body(Body::Empty)
-        .unwrap();
+        .unwrap()
+        .with_path_parameters(path_param);
     let response = saint::saint(request, Context::default())
         .await
         .expect("expected Ok(_) value")
@@ -313,12 +340,18 @@ async fn delete_test() {
         "http://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints/{}",
         save_id.unwrap().to_hyphenated()
     );
+    let mut path_param = HashMap::new();
+    path_param.insert(
+        "id".to_string(),
+        vec![save_id.unwrap().to_hyphenated().to_string()],
+    );
     let request = http::Request::builder()
         .uri(uri)
         .method("GET")
         .header("Content-Type", "application/json")
         .body(Body::Empty)
-        .unwrap();
+        .unwrap()
+        .with_path_parameters(path_param);
     let response = saint::saint(request, Context::default())
         .await
         .expect("expected Ok(_) value")
@@ -333,7 +366,7 @@ async fn test_get_saints() {
     println!("is it working?");
 
     let request = http::Request::builder()
-        .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints?")
+        .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints")
         .method("GET")
         .header("Content-Type", "application/json")
         .body(Body::Empty)
@@ -354,12 +387,15 @@ async fn test_get_saints() {
 
     assert!(!collection_saint.is_empty());
 
+    let mut query_param = HashMap::new();
+    query_param.insert("displayName".to_string(), vec!["notexist".to_string()]);
     let request = http::Request::builder()
         .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints?displayName=notexist")
         .method("GET")
         .header("Content-Type", "application/json")
         .body(Body::Empty)
-        .unwrap();
+        .unwrap()
+        .with_query_string_parameters(query_param);
 
     let response = saint::saint(request, Context::default())
         .await
