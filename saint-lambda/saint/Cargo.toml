@@ -15,7 +15,7 @@ domain = {path = "../../saint-app/domain"}
 jsonwebtoken = "7.2.0"
 serde = { version = "1.0", features = ["derive"] }
 uuid = "0.8"
-hvcg_biography_openapi_saint = "0.3.4"
+hvcg_biography_openapi_saint = "0.4.0"
 serde_qs = "0.8.4"
 
 [dev-dependencies]
