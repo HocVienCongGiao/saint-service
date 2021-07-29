@@ -328,8 +328,9 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         offset: Option<u16>,
         count: Option<u16>,
     ) -> SaintCollectionDbResponse {
-        let filter = parse_filter_param(offset, count, is_male, display_name.clone());
-        let result = query::get_collection(&(*self).client, filter).await;
+        let filter = combine_into_filter_string(is_male, display_name);
+        let pagination = combine_into_pagination_string(offset, count);
+        let result = query::get_collection(&(*self).client, filter.clone(), pagination).await;
 
         let collection: Vec<SaintDbResponse>;
         if result.is_err() {
@@ -344,8 +345,8 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
 
         let has_more: Option<bool>;
         if let Some(count_param) = count {
-            let filter = parse_filter_param(offset, None, is_male, display_name.clone());
-            let count_result = query::count_without_limit(&(*self).client, filter)
+            let pagination = combine_into_pagination_string(offset, None);
+            let count_result = query::count_without_limit(&(*self).client, filter, pagination)
                 .await
                 .unwrap();
             if (count_result as u16) > count_param {
@@ -408,34 +409,27 @@ fn convert_to_saint_db_response(row: Row) -> SaintDbResponse {
     }
 }
 
-fn parse_filter_param(
-    offset: Option<u16>,
-    count: Option<u16>,
-    is_male: Option<bool>,
-    display_name: Option<String>,
-) -> String {
+fn combine_into_filter_string(is_male: Option<bool>, display_name: Option<String>) -> String {
     let display_name = display_name
         .map(|value| format!("%{}%", value))
         .unwrap_or("%".to_string());
+
+    if is_male.is_some() {
+        format!(
+            "display_name LIKE '{}' AND is_male is {}",
+            display_name,
+            is_male.unwrap()
+        )
+    } else {
+        format!("display_name LIKE '{}'", display_name)
+    }
+}
+
+fn combine_into_pagination_string(offset: Option<u16>, count: Option<u16>) -> String {
     let count = count
         .map(|value| value.to_string())
         .unwrap_or("ALL".to_string());
     let offset = offset.unwrap_or(0);
 
-    if is_male.is_some() {
-        format!(
-            "WHERE display_name LIKE '{}' AND is_male is {} \
-        LIMIT {} OFFSET {}",
-            display_name,
-            is_male.unwrap(),
-            count,
-            offset
-        )
-    } else {
-        format!(
-            "WHERE display_name LIKE '{}' \
-        LIMIT {} OFFSET {}",
-            display_name, count, offset
-        )
-    }
+    format!("LIMIT {} OFFSET {}", count, offset)
 }

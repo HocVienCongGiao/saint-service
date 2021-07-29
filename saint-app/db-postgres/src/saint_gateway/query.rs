@@ -13,11 +13,16 @@ pub async fn find_one_by_id(client: &Client, id: Uuid) -> Result<Row, Error> {
     client.query_one(&stmt, name_param).await
 }
 
-pub async fn get_collection(client: &Client, filter: String) -> Result<Vec<Row>, Error> {
+pub async fn get_collection(
+    client: &Client,
+    filter: String,
+    pagination: String,
+) -> Result<Vec<Row>, Error> {
     let statement = format!(
         "SELECT * FROM saint__saint_view \
+        WHERE {} \
         {}",
-        filter
+        filter, pagination
     );
 
     println!("statement = {}", statement);
@@ -28,11 +33,16 @@ pub async fn get_collection(client: &Client, filter: String) -> Result<Vec<Row>,
     client.query(&stmt, name_param).await
 }
 
-pub async fn count_without_limit(client: &Client, filter: String) -> Result<i64, Error> {
+pub async fn count_without_limit(
+    client: &Client,
+    filter: String,
+    pagination: String,
+) -> Result<i64, Error> {
     let statement = format!(
         "SELECT COUNT(*) FROM saint__saint_view \
+        WHERE {} \
         {}",
-        filter
+        filter, pagination
     );
 
     println!("statement = {}", statement);
