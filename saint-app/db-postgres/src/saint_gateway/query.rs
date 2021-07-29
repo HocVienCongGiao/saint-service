@@ -54,11 +54,12 @@ pub async fn get_collection(
     client.query(&stmt, name_param).await
 }
 
-pub async fn count_without_limit(client: &Client,
+pub async fn count_without_limit(
+    client: &Client,
     offset: Option<u16>,
     is_male: Option<bool>,
-    display_name: Option<String>
-    ) -> Result<i16, Error> {
+    display_name: Option<String>,
+) -> Result<i64, Error> {
     let display_name = display_name
         .map(|value| format!("%{}%", value))
         .unwrap_or("%".to_string());

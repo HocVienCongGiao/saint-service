@@ -115,7 +115,6 @@ pub async fn get_saints(
         })
         .await;
     response.to_openapi()
-
 }
 
 #[cfg(test)]

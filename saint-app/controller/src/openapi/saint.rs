@@ -1,4 +1,6 @@
-pub use domain::boundaries::{SaintMutationResponse, SaintQueryResponse, SaintCollectionQueryResponse};
+pub use domain::boundaries::{
+    SaintCollectionQueryResponse, SaintMutationResponse, SaintQueryResponse,
+};
 pub use hvcg_biography_openapi_saint::models::{Saint, SaintCollection};
 
 pub fn create_saint() {
@@ -37,10 +39,12 @@ impl ToOpenApi<Saint> for SaintMutationResponse {
 
 impl ToOpenApi<SaintCollection> for SaintCollectionQueryResponse {
     fn to_openapi(self) -> SaintCollection {
-        let collection = (self.collection
-                        .into_iter()
-                        .map(|saint_query_response| saint_query_response.to_openapi())
-                        .collect::<Vec<Saint>>()).to_vec();
+        let collection = (self
+            .collection
+            .into_iter()
+            .map(|saint_query_response| saint_query_response.to_openapi())
+            .collect::<Vec<Saint>>())
+        .to_vec();
         SaintCollection {
             saints: Some(collection),
             has_more: self.has_more,

@@ -73,7 +73,10 @@ pub fn get_id_from_request(req: &Request) -> Option<uuid::Uuid> {
 pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Error> {
     println!("Request {:?}", req);
     println!("path_parameters {:?}", req.path_parameters());
-    println!("query_string_parameters {:?}", req.query_string_parameters());
+    println!(
+        "query_string_parameters {:?}",
+        req.query_string_parameters()
+    );
     println!("Request Method {:?}", req.method());
 
     if req.method() == method::Method::OPTIONS {

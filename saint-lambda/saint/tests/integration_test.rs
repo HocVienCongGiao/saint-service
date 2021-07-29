@@ -1,4 +1,4 @@
-use hvcg_biography_openapi_saint::models::Saint;
+use hvcg_biography_openapi_saint::models::{Saint, SaintCollection};
 use lambda_http::http::header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
     CONTENT_TYPE,
@@ -365,27 +365,41 @@ async fn test_get_saints() {
     initialise();
     println!("is it working?");
 
+    let default_saint_collection = SaintCollection {
+        saints: Some(vec![]),
+        has_more: None,
+    };
+
+    let mut query_param = HashMap::new();
+    query_param.insert("count".to_string(), vec!["1".to_string()]);
     let request = http::Request::builder()
-        .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints")
+        .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints?count=1")
         .method("GET")
         .header("Content-Type", "application/json")
         .body(Body::Empty)
-        .unwrap();
+        .unwrap()
+        .with_query_string_parameters(query_param);
 
     let response = saint::saint(request, Context::default())
         .await
         .expect("expected Ok(_) value")
         .into_response();
 
-    let collection_saint: Vec<Saint>;
+    let saint_collection: SaintCollection;
     if let Body::Text(body) = response.body() {
-        collection_saint = serde_json::from_str(body).expect("Unable deserialise response body");
+        saint_collection = serde_json::from_str(body).expect("Unable deserialise response body");
     } else {
-        collection_saint = vec![];
+        saint_collection = default_saint_collection;
     }
-    println!("{:?}", collection_saint);
+    println!("{:?}", saint_collection);
 
-    assert!(!collection_saint.is_empty());
+    assert!(!saint_collection.saints.unwrap().is_empty());
+    assert_eq!(saint_collection.has_more, Some(true));
+
+    let default_saint_collection = SaintCollection {
+        saints: Some(vec![]),
+        has_more: None,
+    };
 
     let mut query_param = HashMap::new();
     query_param.insert("displayName".to_string(), vec!["notexist".to_string()]);
@@ -402,13 +416,13 @@ async fn test_get_saints() {
         .expect("expected Ok(_) value")
         .into_response();
 
-    let collection_saint: Vec<Saint>;
+    let saint_collection: SaintCollection;
     if let Body::Text(body) = response.body() {
-        collection_saint = serde_json::from_str(body).expect("Unable deserialise response body");
+        saint_collection = serde_json::from_str(body).expect("Unable deserialise response body");
     } else {
-        collection_saint = vec![];
+        saint_collection = default_saint_collection;
     }
-    println!("{:?}", collection_saint);
+    println!("{:?}", saint_collection);
 
-    assert!(collection_saint.is_empty());
+    assert!(saint_collection.saints.unwrap().is_empty());
 }
