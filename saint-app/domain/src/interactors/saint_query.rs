@@ -50,6 +50,7 @@ where
             .collect();
         SaintCollectionQueryResponse {
             collection: collection,
+            has_more: result.has_more,
         }
     }
 }

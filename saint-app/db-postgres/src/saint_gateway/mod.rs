@@ -329,7 +329,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         count: Option<u16>,
     ) -> SaintCollectionDbResponse {
         let result =
-            query::get_collection(&(*self).client, offset, count, is_male, display_name).await;
+            query::get_collection(&(*self).client, offset, count, is_male, display_name.clone()).await;
         let collection: Vec<SaintDbResponse>;
         if result.is_err() {
             collection = vec![];
@@ -340,7 +340,22 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
                 .map(|row| convert_to_saint_db_response(row))
                 .collect();
         }
-        SaintCollectionDbResponse { collection }
+
+        let has_more: Option<bool>;
+        if let Some(count_param) = count {
+            let count_result = query::count_without_limit(&(*self).client, offset, is_male, display_name.clone()).await.unwrap();
+            if (count_result as u16) > count_param {
+                has_more = Some(true);
+            }
+            else {
+                has_more = Some(false);
+            }
+        }
+        else { has_more = None };
+        SaintCollectionDbResponse {
+            collection,
+            has_more,
+        }
     }
 }
 

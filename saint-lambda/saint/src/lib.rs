@@ -1,5 +1,5 @@
 use domain::boundaries::SaintMutationError;
-use hvcg_biography_openapi_saint::models::Saint;
+use hvcg_biography_openapi_saint::models::{Saint, SaintCollection};
 use jsonwebtoken::TokenData;
 use lambda_http::http::header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -121,13 +121,13 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
     );
 
     let saint_response: Option<controller::openapi::saint::Saint>;
-    let saint_collection: Vec<Saint>;
+    let saint_collection: Option<SaintCollection>;
     let mut is_get_saints = false;
     let status_code: u16;
     match *req.method() {
         method::Method::GET => {
             if let Some(id) = get_id_from_request(&req) {
-                saint_collection = vec![];
+                saint_collection = None;
                 saint_response = controller::get_saint(id).await;
                 if saint_response.is_none() {
                     status_code = 404;
@@ -141,14 +141,14 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                 let offset: Option<u16> = query.offset;
                 let count: Option<u16> = query.count;
                 saint_collection =
-                    controller::get_saints(gender, display_name, offset, count).await;
+                    Some(controller::get_saints(gender, display_name, offset, count).await);
                 is_get_saints = true;
                 saint_response = None;
                 status_code = 200;
             }
         }
         method::Method::POST => {
-            saint_collection = vec![];
+            saint_collection = None;
             if let Some(value) = req.payload().unwrap_or(None) {
                 let lambda_saint_request: Saint = value;
                 let serialized_saint = serde_json::to_string(&lambda_saint_request).unwrap();
@@ -172,7 +172,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         method::Method::PUT => {
-            saint_collection = vec![];
+            saint_collection = None;
             let id = get_id_from_request(&req);
             let value = req.payload().unwrap_or(None);
             if id.is_some() && value.is_some() {
@@ -198,7 +198,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         method::Method::DELETE => {
-            saint_collection = vec![];
+            saint_collection = None;
             saint_response = None;
             if let Some(id) = get_id_from_request(&req) {
                 let result = controller::delete_saint(id).await;
@@ -215,7 +215,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             }
         }
         _ => {
-            saint_collection = vec![];
+            saint_collection = None;
             saint_response = None;
             status_code = 404;
         }
@@ -227,7 +227,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
         .header(ACCESS_CONTROL_ALLOW_METHODS, "*")
         .status(status_code)
-        .body(if saint_response.is_none() && saint_collection.is_empty() {
+        .body(if saint_response.is_none() && saint_collection.is_none() {
             Body::Empty
         } else {
             if is_get_saints {

@@ -4,7 +4,7 @@ use domain::boundaries::{
     SaintDbGateway, SaintMutationError, SaintMutationInputBoundary, SaintMutationRequest,
     SaintQueryInputBoundary, SaintQueryRequest,
 };
-pub use hvcg_biography_openapi_saint::models::Saint;
+pub use hvcg_biography_openapi_saint::models::{Saint, SaintCollection};
 use uuid::Uuid;
 
 pub mod openapi;
@@ -100,7 +100,7 @@ pub async fn get_saints(
     display_name: Option<String>,
     offset: Option<u16>,
     count: Option<u16>,
-) -> Vec<openapi::saint::Saint> {
+) -> SaintCollection {
     let client = db_postgres::connect().await;
 
     let saint_repository = SaintRepository { client };
@@ -114,11 +114,8 @@ pub async fn get_saints(
             count: count,
         })
         .await;
-    response
-        .collection
-        .into_iter()
-        .map(|saint_query_response| saint_query_response.to_openapi())
-        .collect()
+    response.to_openapi()
+
 }
 
 #[cfg(test)]
