@@ -328,8 +328,10 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         offset: Option<u16>,
         count: Option<u16>,
     ) -> SaintCollectionDbResponse {
-        let result =
-            query::get_collection(&(*self).client, offset, count, is_male, display_name).await;
+        let filter = combine_into_filter_string(is_male, display_name);
+        let pagination = combine_into_pagination_string(offset, count);
+        let result = query::get_collection(&(*self).client, filter.clone(), pagination).await;
+
         let collection: Vec<SaintDbResponse>;
         if result.is_err() {
             collection = vec![];
@@ -340,7 +342,25 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
                 .map(|row| convert_to_saint_db_response(row))
                 .collect();
         }
-        SaintCollectionDbResponse { collection }
+
+        let has_more: Option<bool>;
+        if let Some(count_param) = count {
+            let pagination = combine_into_pagination_string(offset, None);
+            let count_result = query::count_without_limit(&(*self).client, filter, pagination)
+                .await
+                .unwrap();
+            if (count_result as u16) > count_param {
+                has_more = Some(true);
+            } else {
+                has_more = Some(false);
+            }
+        } else {
+            has_more = None
+        };
+        SaintCollectionDbResponse {
+            collection,
+            has_more,
+        }
     }
 }
 
@@ -387,4 +407,29 @@ fn convert_to_saint_db_response(row: Row) -> SaintDbResponse {
         feast_day,
         feast_month,
     }
+}
+
+fn combine_into_filter_string(is_male: Option<bool>, display_name: Option<String>) -> String {
+    let display_name = display_name
+        .map(|value| format!("%{}%", value))
+        .unwrap_or("%".to_string());
+
+    if is_male.is_some() {
+        format!(
+            "display_name LIKE '{}' AND is_male is {}",
+            display_name,
+            is_male.unwrap()
+        )
+    } else {
+        format!("display_name LIKE '{}'", display_name)
+    }
+}
+
+fn combine_into_pagination_string(offset: Option<u16>, count: Option<u16>) -> String {
+    let count = count
+        .map(|value| value.to_string())
+        .unwrap_or("ALL".to_string());
+    let offset = offset.unwrap_or(0);
+
+    format!("LIMIT {} OFFSET {}", count, offset)
 }
