@@ -371,9 +371,10 @@ async fn test_get_saints() {
     };
 
     let mut query_param = HashMap::new();
-    query_param.insert("count".to_string(), vec!["1".to_string()]);
+    query_param.insert("count".to_string(), vec!["5".to_string()]);
+    query_param.insert("offset".to_string(), vec!["1".to_string()]);
     let request = http::Request::builder()
-        .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints?count=1")
+        .uri("https://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints?offset=1&count=5")
         .method("GET")
         .header("Content-Type", "application/json")
         .body(Body::Empty)
@@ -394,7 +395,7 @@ async fn test_get_saints() {
     println!("{:?}", saint_collection);
 
     assert!(!saint_collection.saints.unwrap().is_empty());
-    assert_eq!(saint_collection.has_more, Some(true));
+    assert_eq!(saint_collection.has_more, Some(false));
 
     let default_saint_collection = SaintCollection {
         saints: Some(vec![]),
