@@ -39,9 +39,10 @@ pub async fn count_without_limit(
     pagination: String,
 ) -> Result<i64, Error> {
     let statement = format!(
-        "SELECT COUNT(*) FROM saint__saint_view \
+        "SELECT COUNT(*) FROM
+        (SELECT * FROM saint__saint_view \
         WHERE {} \
-        {}",
+        {}) AS saints",
         filter, pagination
     );
 
