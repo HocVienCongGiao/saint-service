@@ -21,6 +21,7 @@ pub async fn get_collection(
     let statement = format!(
         "SELECT * FROM saint__saint_view \
         WHERE {} \
+        ORDER BY id \
         {}",
         filter, pagination
     );
@@ -42,6 +43,7 @@ pub async fn count_without_limit(
         "SELECT COUNT(*) FROM
         (SELECT * FROM saint__saint_view \
         WHERE {} \
+        ORDER BY id \
         {}) AS saints",
         filter, pagination
     );
