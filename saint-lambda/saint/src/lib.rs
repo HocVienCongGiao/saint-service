@@ -44,8 +44,8 @@ struct TokenPayload {
 pub struct SaintQuery {
     gender: Option<String>,
     display_name: Option<String>,
-    offset: Option<u16>,
-    count: Option<u16>,
+    offset: Option<i64>,
+    count: Option<i64>,
 }
 
 pub fn get_query_from_request(req: &Request) -> SaintQuery {
@@ -141,8 +141,8 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                 let query = get_query_from_request(&req);
                 let gender: Option<String> = query.gender;
                 let display_name: Option<String> = query.display_name;
-                let offset: Option<u16> = query.offset;
-                let count: Option<u16> = query.count;
+                let offset: Option<i64> = query.offset;
+                let count: Option<i64> = query.count;
                 saint_collection =
                     Some(controller::get_saints(gender, display_name, offset, count).await);
                 is_get_saints = true;

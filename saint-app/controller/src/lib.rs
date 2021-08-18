@@ -98,8 +98,8 @@ pub async fn delete_saint(id: Uuid) -> Result<(), SaintMutationError> {
 pub async fn get_saints(
     gender: Option<String>,
     display_name: Option<String>,
-    offset: Option<u16>,
-    count: Option<u16>,
+    offset: Option<i64>,
+    count: Option<i64>,
 ) -> SaintCollection {
     let client = db_postgres::connect().await;
 

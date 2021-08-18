@@ -37,8 +37,8 @@ pub struct SaintQueryRequest {
     pub id: Option<Uuid>,
     pub gender: Option<String>,
     pub display_name: Option<String>,
-    pub offset: Option<u16>,
-    pub count: Option<u16>,
+    pub offset: Option<i64>,
+    pub count: Option<i64>,
 }
 pub struct SaintDbRequest {
     pub id: Option<Uuid>,
@@ -107,8 +107,8 @@ pub trait SaintDbGateway {
         &self,
         is_male: Option<bool>,
         display_name: Option<String>,
-        offset: Option<u16>,
-        count: Option<u16>,
+        offset: Option<i64>,
+        count: Option<i64>,
     ) -> SaintCollectionDbResponse;
 }
 
