@@ -22,7 +22,7 @@ pub async fn get_collection(
 ) -> Result<Vec<Row>, Error> {
     let statement = format!(
         "SELECT * FROM saint__saint_view \
-        WHERE display_name LIKE $1 AND ($2::BOOL is null or is_male is $2::BOOL) \
+        WHERE display_name LIKE $1 AND ($2::BOOL is null or is_male = $2::BOOL) \
         ORDER BY id \
         LIMIT $3 OFFSET $4",
     );
@@ -42,7 +42,7 @@ pub async fn count_without_limit(
     let statement = format!(
         "SELECT COUNT(*) FROM
         (SELECT * FROM saint__saint_view \
-        WHERE display_name LIKE $1 AND ($2::BOOL is null or is_male is $2::BOOL) \
+        WHERE display_name LIKE $1 AND ($2::BOOL is null or is_male = $2::BOOL) \
         ORDER BY id \
         LIMIT ALL OFFSET $3) AS saints",
     );
