@@ -224,12 +224,12 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         }
     }
 
-    let response_builder = Response::builder();
+    let mut response_builder = Response::builder();
     if status_code != 204 {
-        response_builder.header(CONTENT_TYPE, "application/json");
+        response_builder = response_builder.header(CONTENT_TYPE, "application/json");
+        println!("status code is NOT 204, adding application/json")
     }
-    let response: Response<Body> = Response::builder()
-
+    let response: Response<Body> = response_builder
         .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
         .header(ACCESS_CONTROL_ALLOW_METHODS, "*")
@@ -242,10 +242,14 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
             } else {
                 serde_json::to_string(&saint_response)
             }
-                .expect("unable to serialize serde_json::Value")
-                .into()
+            .expect("unable to serialize serde_json::Value")
+            .into()
         })
         .expect("unable to build http::Response");
+    println!(
+        "saint HeaderMap.get(CONTENT_TYPE)  {:?}",
+        serde_json::to_string(response.headers().get(CONTENT_TYPE)
+    );
     println!(
         "saint response {:?}",
         serde_json::to_string(&saint_response)
