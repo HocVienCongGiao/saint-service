@@ -248,7 +248,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         .expect("unable to build http::Response");
     println!(
         "saint HeaderMap.get(CONTENT_TYPE)  {:?}",
-        serde_json::to_string(response.headers().get(CONTENT_TYPE)
+        serde_json::to_string(&response.headers().get(CONTENT_TYPE).is_none())
     );
     println!(
         "saint response {:?}",
