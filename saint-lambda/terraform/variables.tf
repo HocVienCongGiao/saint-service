@@ -2,6 +2,10 @@ variable "service_name" {
 default = "saint-service"
 }
 
+variable "app_version" {
+  default = "latest"
+}
+
 variable "organisation" {
   default = "HocVienCongGiao"
 }
