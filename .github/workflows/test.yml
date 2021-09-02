@@ -1,0 +1,144 @@
+name: Test
+
+on:
+  push:
+    branches-ignore:
+      - master
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check_saint_lambda_files:
+    name: Check Saint Lambda source code
+    outputs:
+      run_job: ${{ steps.check_saint_lambda_files.outputs.run_job }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Check modified AWS Saint Lambda Source Code
+        id: check_saint_lambda_files
+        working-directory: saint-lambda
+        run: |
+          echo "=============== list modified files ==============="
+          git diff --name-only HEAD^ HEAD
+
+          echo "========== check paths of modified files =========="
+          git diff --name-only HEAD^ HEAD > files.txt
+          while IFS= read -r file
+          do
+            echo $file
+            if [[ $file == saint-lambda/terraform/* || $file == .github/*  ]]; then
+              echo "This modified file is not Saint Lambda source code"
+              echo "::set-output name=run_job::false"
+              break
+            else
+              echo "::set-output name=run_job::true"
+            fi
+          done < files.txt
+
+  codestyle:
+    runs-on: ubuntu-latest
+    needs: [ check_saint_lambda_files ]
+    if: needs.check_saint_lambda_files.outputs.run_job == 'true'
+    steps:
+      - name: Set up Rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          components: rustfmt
+      - uses: actions/checkout@v2
+      - 
+        working-directory: saint-lambda
+        run: cargo fmt --all -- --check
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: [ check_saint_lambda_files ]
+    if: needs.check_saint_lambda_files.outputs.run_job == 'true'
+    steps:
+      - name: Set up Rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          components: clippy
+      - uses: actions/checkout@v2
+      - 
+        working-directory: saint-lambda
+        run: cargo clippy --all-targets -- -D clippy::all
+
+  compile:
+    runs-on: ubuntu-latest
+    needs: [ check_saint_lambda_files ]
+    if: needs.check_saint_lambda_files.outputs.run_job == 'true'
+    steps:
+      - name: Set up Rust
+        uses: hecrj/setup-rust-action@v1
+      - uses: actions/checkout@v2
+      - 
+        working-directory: saint-lambda
+        run: cargo check --all
+  test:
+    needs: [codestyle, lint, compile]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:11
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: dev_hocvien
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_USER: hocvien_dev
+        ports:
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Setup Rust
+      uses: hecrj/setup-rust-action@v1
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        path: ./rust-service
+    - name: Checkout shared-db-service
+      uses: actions/checkout@v2
+      with:
+        # Repository name with owner. For example, actions/checkout
+        # Default: ${{ github.repository }}
+        repository: 'HocVienCongGiao/shared-db-service'
+        path: ./db-service
+        ref: development
+        token: ${{ secrets.GH_OAUTH_TOKEN }}
+    - name: Setup python
+      working-directory: ./db-service
+      env:
+        DB_NAME: dev_hocvien
+        DB_PASSWORD: 123456
+        DB_USER: hocvien_dev
+        DB_HOST: 0.0.0.0
+      run: |
+        echo "prepare"
+        sudo apt-get update -y &&
+        sudo apt-get install -y postgresql-server-dev-all gcc python3-dev musl-dev
+        echo "install python"
+        pip install -r ./requirements.txt --target ./lambda/terraform/module/python
+        echo "copy python files in lamda folder"
+        cp -R ./lambda/*.py ./lambda/terraform/module/python/
+        echo "copy python files in shared_db_app folder"
+        cp -R ./shared_db_app ./lambda/terraform/module/python/
+        echo "copy python files in shared_db_app folder"
+        cp -R ./migrations ./lambda/terraform/module/python/
+        echo "all files in shared_db_app python folder"
+        ls -l ./lambda/terraform/module/python/
+        cd ./lambda/terraform/module/python/ && python -c 'from shared_db_app.migration import migrate; migrate()'
+        echo "migrate successfully"
+        psql -h 0.0.0.0 -U hocvien_dev -d dev_hocvien -p 5432 -c 'SELECT * FROM saint__saint_view' -w
+    - name: Test Saint lambda
+      working-directory: ./rust-service/saint-lambda
+      run: cargo test
