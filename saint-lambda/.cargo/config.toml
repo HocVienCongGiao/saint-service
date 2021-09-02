@@ -1,0 +1,11 @@
+# Makes artifactory the default registry and saves passing --registry parameter
+[registry]
+default = "artifactory"
+
+[registries.artifactory]
+index = "https://hocvienconggiao.jfrog.io/artifactory/git/cargo-local.git"
+
+# For sending credentials in git requests.
+# Not required if anonymous access is enabled
+[net]
+git-fetch-with-cli = true

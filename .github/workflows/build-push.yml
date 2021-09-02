@@ -1,0 +1,161 @@
+name: Build and Push
+
+on:
+  push:
+    branches:
+      - master
+      - update
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check_saint_lambda_files:
+    name: Check Saint Lambda source code
+    outputs:
+      run_job: ${{ steps.check_saint_lambda_files.outputs.run_job }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Check modified AWS Saint Lambda Source Code
+        id: check_saint_lambda_files
+        working-directory: saint-lambda
+        run: |
+          echo "=============== list modified files ==============="
+          git diff --name-only HEAD^ HEAD
+
+          echo "========== check paths of modified files =========="
+          git diff --name-only HEAD^ HEAD > files.txt
+          while IFS= read -r file
+          do
+            echo $file
+            if [[ $file == saint-lambda/terraform/* || $file == .github/*  ]]; then
+              echo "This modified file is not Saint Lambda source code"
+              echo "::set-output name=run_job::false"
+              break
+            else
+              echo "::set-output name=run_job::true"
+            fi
+          done < files.txt
+
+  # deploy on pushes to master branch
+  # assumes aws credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) are set in github secrets
+  push_development:
+    if: github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    env:
+      TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
+      SLS_DOCKER_ARGS: -v  /home/runner/work/saint-service/saint-service/saint-app:/saint-app
+    steps:
+      - name: Install Musl-gcc
+        run: |
+          sudo apt update -y
+          sudo apt install -y musl-tools
+
+      - name: Set up Rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          targets: x86_64-unknown-linux-musl
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+
+      - name: Build and Push for Development
+        working-directory: saint-lambda
+        run: |
+          sudo apt install -y pkg-config libssl-dev
+          sudo ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/x86_64-linux-musl/asm
+          sudo ln -s /usr/include/asm-generic /usr/include/x86_64-linux-musl/asm-generic
+          sudo ln -s /usr/include/linux /usr/include/x86_64-linux-musl/linux
+          sudo mkdir /musl
+          sudo apt-get install wget
+          sudo wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1f.tar.gz
+          sudo tar zxvf OpenSSL_1_1_1f.tar.gz
+          cd openssl-OpenSSL_1_1_1f/
+          sudo CC="musl-gcc -fPIE -pie" ./Configure no-shared no-async --prefix=/musl --openssldir=/musl/ssl linux-x86_64
+          sudo apt-get install build-essential
+          sudo make depend
+          sudo make -j$(nproc)
+          sudo make install
+          export PKG_CONFIG_ALLOW_CROSS=1
+          export OPENSSL_STATIC=true
+          export OPENSSL_DIR=/musl
+          cd /home/runner/work/saint-service/saint-service/saint-lambda
+          cargo build --release --target x86_64-unknown-linux-musl
+          cp ./target/x86_64-unknown-linux-musl/release/saint ./bootstrap && zip saint.zip bootstrap
+          rm bootstrap
+          aws s3 cp ./saint.zip s3://891616054205-ap-southeast-1-aws-lambda/dev-sg-hocvienconggiao/${{ github.event.repository.name }}/latest/saint.zip
+
+
+      - name: Deploy Terraform Config
+        run: |
+          chmod +x ./scripts/terraform-enterprise-push.sh
+          ./scripts/terraform-enterprise-push.sh saint-lambda/terraform HocVienCongGiao/dev-sg-lambda-services-hvcg-saint-service
+
+  push_production:
+    if: github.ref == 'refs/heads/production'
+    runs-on: ubuntu-latest
+    env:
+      TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
+      SLS_DOCKER_ARGS: -v  /home/runner/work/saint-service/saint-service/saint-app:/saint-app
+
+    steps:
+      - name: Install Musl-gcc
+        run: |
+          sudo apt update -y
+          sudo apt install -y musl-tools
+
+      - name: Set up Rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          targets: x86_64-unknown-linux-musl
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+
+      - name: Build and Push for Production
+        working-directory: saint-lambda
+        run: |
+          sudo apt install -y pkg-config libssl-dev
+          sudo ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/x86_64-linux-musl/asm
+          sudo ln -s /usr/include/asm-generic /usr/include/x86_64-linux-musl/asm-generic
+          sudo ln -s /usr/include/linux /usr/include/x86_64-linux-musl/linux
+          sudo mkdir /musl
+          sudo apt-get install wget
+          sudo wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1f.tar.gz
+          sudo tar zxvf OpenSSL_1_1_1f.tar.gz
+          cd openssl-OpenSSL_1_1_1f/
+          sudo CC="musl-gcc -fPIE -pie" ./Configure no-shared no-async --prefix=/musl --openssldir=/musl/ssl linux-x86_64
+          sudo apt-get install build-essential
+          sudo make depend
+          sudo make -j$(nproc)
+          sudo make install
+          export PKG_CONFIG_ALLOW_CROSS=1
+          export OPENSSL_STATIC=true
+          export OPENSSL_DIR=/musl
+          cd /home/runner/work/saint-service/saint-service/saint-lambda
+          cargo build --release --target x86_64-unknown-linux-musl
+          cp ./target/x86_64-unknown-linux-musl/release/saint ./bootstrap && zip saint.zip bootstrap
+
+          aws s3 cp ./saint.zip s3://891616054205-ap-southeast-1-aws-lambda/prod-sg-hocvienconggiao/${{ github.event.repository.name }}/latest/saint.zip
+
+#         aws s3 cp target/lambda/release/notification.zip s3://891616054205-ap-southeast-1-aws-lambda/terraform-api/latest/notification.zip          
+#         aws s3 rm --recursive s3://479284709538-us-west-2-aws-lambda/terraform-api/latest
+
