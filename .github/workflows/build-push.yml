@@ -3,8 +3,7 @@ name: Build and Push
 on:
   push:
     branches:
-      - development
-      - production
+      - master
       - update
 env:
   CARGO_TERM_COLOR: always

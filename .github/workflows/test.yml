@@ -3,8 +3,7 @@ name: Test
 on:
   push:
     branches-ignore:
-      - development
-      - production
+      - master
 env:
   CARGO_TERM_COLOR: always
 
