@@ -224,12 +224,14 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         }
     }
 
-    let mut response_builder = Response::builder();
-    if status_code != 204 {
-        response_builder = response_builder.header(CONTENT_TYPE, "application/json");
-        println!("status code is NOT 204, adding application/json")
+    let mut content_type = "application/json";
+    if status_code == 204 {
+        content_type = "";
+        println!("status code is 204, removing application/json in Content-Type header")
     }
-    let response: Response<Body> = response_builder
+
+    let response: Response<Body> = Response::builder()
+        .header(CONTENT_TYPE, content_type)
         .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         .header(ACCESS_CONTROL_ALLOW_HEADERS, "*")
         .header(ACCESS_CONTROL_ALLOW_METHODS, "*")

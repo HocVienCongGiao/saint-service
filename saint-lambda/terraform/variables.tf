@@ -21,14 +21,6 @@ variable "aws_access_key_id" {}
 variable "aws_secret_access_key" {}
 variable "aws_account_id" {}
 
-variable "api_key" {
-  type    = string
-  default = "DEFAULT_API_KEY_FOR_NOTIF"
-}
-
-variable "tfe_token" {
-  type = string
-}
 
 variable "db_host" {}
 variable "db_user" {}
