@@ -1,4 +1,10 @@
-variable "service_name" {}
+variable "service_name" {
+default = "saint-service"
+}
+
+variable "app_version" {
+  default = "latest"
+}
 
 variable "organisation" {
   default = "HocVienCongGiao"
@@ -7,6 +13,14 @@ variable "organisation" {
 variable "environment" {
   default = "dev-sg"
 }
+
+variable "aws_region" {
+  type    = string
+  default = "ap-southeast-1"
+}
+
+variable "aws_access_key_id" {}
+variable "aws_secret_access_key" {}
 
 variable "db_host" {}
 variable "db_user" {}

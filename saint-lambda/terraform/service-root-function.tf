@@ -10,16 +10,15 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region     = var.aws_region
   access_key = var.aws_access_key_id
   secret_key = var.aws_secret_access_key
 }
 
 module "saint-service" {
-  source = "git::ssh://git@github.com/HocVienCongGiao/terraform-infra.git//skeleton/services/service-function"
+  source       = "git::ssh://git@github.com/HocVienCongGiao/terraform-infra.git//skeleton/services/service-function"
   service_name = var.service_name
-  path_part = var.service_name
-
-  environment = var.environment
-  
+  path_part    = var.service_name
+  file_name    = var.service_name
+  environment  = var.environment
 }
