@@ -1,4 +1,6 @@
-variable "service_name" {}
+variable "service_name" {
+default = "saint-service"
+}
 
 variable "organisation" {
   default = "HocVienCongGiao"
