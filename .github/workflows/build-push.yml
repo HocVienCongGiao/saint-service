@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
-      SLS_DOCKER_ARGS: -v  /home/runner/work/saint-service/saint-service/saint-app:/saint-app
+      SLS_DOCKER_ARGS: -v  /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/saint-app:/saint-app
     steps:
       - name: Output Run ID
         run: echo ${{ github.run_id }}
@@ -74,7 +74,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-southeast-1
 
-      - name: Build and Push for Development
+      - name: Install Dependencies
         working-directory: saint-lambda
         run: |
           sudo apt install -y pkg-config libssl-dev
@@ -94,14 +94,23 @@ jobs:
           export PKG_CONFIG_ALLOW_CROSS=1
           export OPENSSL_STATIC=true
           export OPENSSL_DIR=/musl
-          cd /home/runner/work/saint-service/saint-service/saint-lambda
-          cargo build --release --target x86_64-unknown-linux-musl
-          cp ./target/x86_64-unknown-linux-musl/release/saint ./bootstrap && zip saint.zip bootstrap
-          rm bootstrap
-          aws s3 cp ./saint.zip s3://891616054205-ap-southeast-1-aws-lambda/builds-hocvienconggiao/${{ github.event.repository.name }}/latest/${{ github.event.repository.name }}.zip
-          aws s3 cp ./saint.zip s3://891616054205-ap-southeast-1-aws-lambda/builds-hocvienconggiao/${{ github.event.repository.name }}/${{ github.run_number }}/${{ github.event.repository.name }}.zip
 
-      - name: Deploy Terraform Config
+      - name: Build
+        working-directory: saint-lambda
+        run: |
+          cd /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/saint-lambda
+          cargo build --release --target x86_64-unknown-linux-musl
+          cp ./target/x86_64-unknown-linux-musl/release/saint ./bootstrap && zip ${{ github.event.repository.name }}.zip bootstrap
+          rm bootstrap
+
+      - name: Push to S3
+        working-directory: saint-lambda
+        run: |
+          cd /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/saint-lambda
+          aws s3 cp ./${{ github.event.repository.name }}.zip s3://891616054205-ap-southeast-1-aws-lambda/builds-hocvienconggiao/${{ github.event.repository.name }}/latest/${{ github.event.repository.name }}.zip
+          aws s3 cp ./${{ github.event.repository.name }}.zip s3://891616054205-ap-southeast-1-aws-lambda/builds-hocvienconggiao/${{ github.event.repository.name }}/${{ github.run_number }}/${{ github.event.repository.name }}.zip
+
+      - name: Deploy to Dev using Terraform
         run: |
           chmod +x ./scripts/terraform-enterprise-push.sh
           ./scripts/terraform-enterprise-push.sh saint-lambda/terraform HocVienCongGiao/dev-sg-lambda-services-hvcg-${{ github.event.repository.name }}
