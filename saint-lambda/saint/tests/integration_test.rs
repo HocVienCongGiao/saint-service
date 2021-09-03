@@ -368,6 +368,7 @@ async fn test_get_saints() {
     let default_saint_collection = SaintCollection {
         saints: Some(vec![]),
         has_more: None,
+        total: Some(0),
     };
 
     let mut query_param = HashMap::new();
@@ -400,6 +401,7 @@ async fn test_get_saints() {
     let default_saint_collection = SaintCollection {
         saints: Some(vec![]),
         has_more: None,
+        total: Some(0),
     };
 
     let mut query_param = HashMap::new();
