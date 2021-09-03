@@ -2,7 +2,7 @@ variable "service_name" {
 default = "saint-service"
 }
 
-variable "app_version" {
+variable "build_number" {
   default = "latest"
 }
 

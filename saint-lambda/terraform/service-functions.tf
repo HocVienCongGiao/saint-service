@@ -1,5 +1,6 @@
 module "saints" {
   source                 = "git::ssh://git@github.com/HocVienCongGiao/terraform-infra.git//skeleton/services/service-function"
+  build_number           = var.build_number
   service_name           = var.service_name
   query_api_parent_id    = module.saint-service.query_api_gateway_resource_id
   mutation_api_parent_id = module.saint-service.mutation_api_gateway_resource_id
@@ -20,6 +21,7 @@ module "saints" {
 
 module "saints_id" {
   source                 = "git::ssh://git@github.com/HocVienCongGiao/terraform-infra.git//skeleton/services/service-function"
+  build_number           = var.build_number
   service_name           = var.service_name
   query_api_parent_id    = module.saints.query_api_gateway_resource_id
   mutation_api_parent_id = module.saints.mutation_api_gateway_resource_id
