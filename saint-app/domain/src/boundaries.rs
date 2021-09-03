@@ -87,11 +87,13 @@ pub struct SaintDbResponse {
 pub struct SaintCollectionQueryResponse {
     pub collection: Vec<SaintQueryResponse>,
     pub has_more: Option<bool>,
+    pub total: i64,
 }
 
 pub struct SaintCollectionDbResponse {
     pub collection: Vec<SaintDbResponse>,
     pub has_more: Option<bool>,
+    pub total: i64,
 }
 
 pub trait MutationOutputBoundary {}

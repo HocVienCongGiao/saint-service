@@ -51,6 +51,7 @@ where
         SaintCollectionQueryResponse {
             collection: collection,
             has_more: result.has_more,
+            total: result.total,
         }
     }
 }

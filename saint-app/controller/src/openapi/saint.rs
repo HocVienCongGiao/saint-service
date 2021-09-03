@@ -48,6 +48,7 @@ impl ToOpenApi<SaintCollection> for SaintCollectionQueryResponse {
         SaintCollection {
             saints: Some(collection),
             has_more: self.has_more,
+            total: Option::from(self.total),
         }
     }
 }
