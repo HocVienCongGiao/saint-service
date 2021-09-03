@@ -355,11 +355,10 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         }
 
         let has_more: Option<bool>;
-        let count_result =
-            query::count_without_limit(&(*self).client, display_name, is_male, offset)
-                .await
-                .unwrap();
-        if count_result > count {
+        let total = query::count_without_limit(&(*self).client, display_name, is_male, offset)
+            .await
+            .unwrap();
+        if total > count {
             has_more = Some(true);
         } else {
             has_more = Some(false);
@@ -367,6 +366,7 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         SaintCollectionDbResponse {
             collection,
             has_more,
+            total,
         }
     }
 }
