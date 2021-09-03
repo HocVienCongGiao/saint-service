@@ -40,6 +40,7 @@ pub struct SaintQueryRequest {
     pub offset: Option<i64>,
     pub count: Option<i64>,
 }
+
 pub struct SaintDbRequest {
     pub id: Option<Uuid>,
     pub display_name: Option<String>,
@@ -51,6 +52,8 @@ pub struct SaintDbRequest {
     pub feast_day: Option<i16>,
     pub feast_month: Option<i16>,
 }
+
+pub struct SaintOrderByDbRequest {}
 
 pub struct SaintMutationResponse {
     pub id: Option<Uuid>,

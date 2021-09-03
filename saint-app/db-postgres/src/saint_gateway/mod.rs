@@ -6,6 +6,7 @@ use uuid::Uuid;
 mod mutation;
 mod query;
 
+use crate::saint_gateway::query::{SortCriteria, SortDirection, SortField};
 use domain::boundaries::{SaintCollectionDbResponse, SaintDbRequest, SaintDbResponse};
 
 pub struct SaintRepository {
@@ -329,15 +330,26 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         count: Option<i64>,
     ) -> SaintCollectionDbResponse {
         let display_name = display_name
-            .map(|value| format!("%{}%", value))
-            .unwrap_or("%".to_string());
+            // .map(|value| format!("{}", value))
+            .unwrap_or("".to_string());
         let offset = offset.unwrap_or(0);
         let count = count.unwrap_or(20);
+        let order_by: [Option<SortCriteria>; 5] = [
+            Option::from(SortCriteria {
+                field: SortField::DisplayName,
+                direction: SortDirection::ASC,
+            }),
+            None,
+            None,
+            None,
+            None,
+        ];
 
-        let result = query::get_collection(
+        let result = query::find_by(
             &(*self).client,
             display_name.clone(),
             is_male,
+            order_by,
             count,
             offset,
         )

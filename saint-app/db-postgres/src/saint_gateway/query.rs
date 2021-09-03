@@ -2,6 +2,36 @@ use tokio_postgres::types::ToSql;
 use tokio_postgres::{Client, Error, Row};
 use uuid::Uuid;
 
+pub(crate) struct SortCriteria {
+    pub(crate) field: SortField,
+    pub(crate) direction: SortDirection,
+}
+
+#[derive(strum_macros::Display)]
+pub(crate) enum SortField {
+    DisplayName,
+    VietnameseName,
+    EnglishName,
+    FeastDay,
+    FeastMonth,
+}
+
+#[derive(strum_macros::Display)]
+pub(crate) enum SortDirection {
+    ASC,
+    DESC,
+}
+
+impl SortCriteria {
+    fn to_query_string(&self) -> String {
+        format!(
+            "{} {}",
+            self.field.to_string().to_snake_case().to_lowercase(),
+            self.direction.to_string()
+        )
+    }
+}
+
 pub async fn find_one_by_id(client: &Client, id: Uuid) -> Result<Row, Error> {
     let stmt = (*client)
         .prepare("SELECT * FROM saint__saint_view WHERE id = $1")
@@ -13,18 +43,30 @@ pub async fn find_one_by_id(client: &Client, id: Uuid) -> Result<Row, Error> {
     client.query_one(&stmt, name_param).await
 }
 
-pub async fn get_collection(
+pub async fn find_by(
     client: &Client,
     display_name: String,
     is_male: Option<bool>,
+    order_by_criteria: [Option<SortCriteria>; 5],
     count: i64,
     offset: i64,
 ) -> Result<Vec<Row>, Error> {
+    let order_by_string: String;
+    const order_by_criteria_length: i8 = order_by_criteria.len();
+    let order_by_strings: [String; order_by_criteria_length];
+    for (i, e) in order_by_criteria.iter().enumerate() {
+        if let Some(element) = e {
+            order_by_strings[i] = element.to_query_string();
+        }
+    }
+    order_by_string = order_by_strings.join(", ");
+
     let statement = format!(
         "SELECT * FROM saint__saint_view \
-        WHERE display_name LIKE $1 AND ($2::BOOL is null or is_male = $2::BOOL) \
-        ORDER BY id \
-        LIMIT $3 OFFSET $4",
+        WHERE unaccent(display_name) LIKE ('%' || unaccent($1) || '%') AND ($2::BOOL is null or is_male = $2::BOOL) \
+        ORDER BY {:?} \
+        LIMIT $3 OFFSET $4", 
+        order_by_string
     );
 
     println!("statement = {}", statement);
