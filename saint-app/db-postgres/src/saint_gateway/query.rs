@@ -52,3 +52,20 @@ pub async fn count_without_limit(
     let name_param: &[&(dyn ToSql + Sync)] = &[&display_name, &is_male, &offset];
     Ok(client.query_one(&stmt, name_param).await?.get("count"))
 }
+
+pub async fn count_total(
+    client: &Client,
+    display_name: String,
+    is_male: Option<bool>,
+) -> Result<i64, Error> {
+    let statement = format!(
+        "SELECT COUNT(*) FROM
+        (SELECT * FROM saint__saint_view \
+        WHERE display_name LIKE $1 AND ($2::BOOL is null or is_male = $2::BOOL)) AS saints",
+    );
+
+    println!("statement = {}", statement);
+    let stmt = (*client).prepare(&statement).await.unwrap();
+    let name_param: &[&(dyn ToSql + Sync)] = &[&display_name, &is_male];
+    Ok(client.query_one(&stmt, name_param).await?.get("count"))
+}
