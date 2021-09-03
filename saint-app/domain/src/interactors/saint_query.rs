@@ -1,7 +1,9 @@
 use crate::boundaries;
 use crate::boundaries::{
     SaintCollectionQueryResponse, SaintDbGateway, SaintDbResponse, SaintQueryRequest,
-    SaintQueryResponse,
+    SaintQueryResponse, SaintSortCriteriaDbRequest, SaintSortCriteriaRequest, SaintSortDbRequest,
+    SaintSortFieldDbRequest, SaintSortFieldRequest, SaintSortRequest, SortDirectionDbRequest,
+    SortDirectionRequest,
 };
 use async_trait::async_trait;
 
@@ -20,7 +22,7 @@ where
             request.id.unwrap().to_hyphenated()
         );
 
-        if let Some(db_response) = ((*self).db_gateway.find_by_id(request.id.unwrap())).await {
+        if let Some(db_response) = ((*self).db_gateway.get_saint_by_id(request.id.unwrap())).await {
             println!("saint found");
             return Some(db_response.to_saint_query_response());
         } else {
@@ -37,12 +39,24 @@ where
         let display_name = request.display_name;
         let offset = request.offset;
         let count = request.count;
+        let sort_request = request.sort_request;
 
-        let result =
-            ((*self)
-                .db_gateway
-                .get_saint_collection(is_male, display_name, offset, count))
-            .await;
+        let sort_db_request: Option<SaintSortDbRequest>;
+        if let Some(sort_request) = sort_request {
+            sort_db_request = Option::from(sort_request.to_db_request());
+        } else {
+            sort_db_request = None
+        }
+
+        let result = ((*self).db_gateway.get_saint_collection(
+            is_male,
+            display_name,
+            sort_db_request,
+            offset,
+            count,
+        ))
+        .await;
+
         let collection = result
             .collection
             .into_iter()
@@ -52,6 +66,40 @@ where
             collection: collection,
             has_more: result.has_more,
             total: result.total,
+        }
+    }
+}
+
+impl SaintSortRequest {
+    fn to_db_request(&self) -> SaintSortDbRequest {
+        let sort_criteria_db_request = self
+            .sort_criteria
+            .iter()
+            .map(|criterion| criterion.to_db_request())
+            .collect();
+        SaintSortDbRequest {
+            sort_criteria: sort_criteria_db_request,
+        }
+    }
+}
+
+impl SaintSortCriteriaRequest {
+    fn to_db_request(&self) -> SaintSortCriteriaDbRequest {
+        let field = &self.field;
+        let direction = &self.direction;
+
+        SaintSortCriteriaDbRequest {
+            field: match field {
+                SaintSortFieldRequest::DisplayName => SaintSortFieldDbRequest::DisplayName,
+                SaintSortFieldRequest::EnglishName => SaintSortFieldDbRequest::EnglishName,
+                SaintSortFieldRequest::VietnameseName => SaintSortFieldDbRequest::VietnameseName,
+                SaintSortFieldRequest::FeastDay => SaintSortFieldDbRequest::FeastDay,
+                SaintSortFieldRequest::FeastMonth => SaintSortFieldDbRequest::FeastMonth,
+            },
+            direction: match direction {
+                SortDirectionRequest::ASC => SortDirectionDbRequest::ASC,
+                SortDirectionRequest::DESC => SortDirectionDbRequest::DESC,
+            },
         }
     }
 }

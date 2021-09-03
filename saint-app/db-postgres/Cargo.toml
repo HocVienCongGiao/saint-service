@@ -15,6 +15,7 @@ domain = { path = "../domain", version = "0.1.5" }
 async-trait = "0.1.50"
 uuid = "0.8"
 strum_macros = "0.21.1"
+heck = "0.3.3"
 
 [dev-dependencies]
 dotenv = "0.15.0"

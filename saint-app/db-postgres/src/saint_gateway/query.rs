@@ -1,14 +1,15 @@
+use heck::SnakeCase;
 use tokio_postgres::types::ToSql;
 use tokio_postgres::{Client, Error, Row};
 use uuid::Uuid;
 
-pub(crate) struct SortCriteria {
-    pub(crate) field: SortField,
+pub(crate) struct SaintSortCriteria {
+    pub(crate) field: SaintSortField,
     pub(crate) direction: SortDirection,
 }
 
 #[derive(strum_macros::Display)]
-pub(crate) enum SortField {
+pub(crate) enum SaintSortField {
     DisplayName,
     VietnameseName,
     EnglishName,
@@ -22,11 +23,13 @@ pub(crate) enum SortDirection {
     DESC,
 }
 
-impl SortCriteria {
+impl SaintSortCriteria {
     fn to_query_string(&self) -> String {
+        let field_str = &*self.field.to_string();
+        let field_str_sc = "field_str".to_snake_case();
         format!(
             "{} {}",
-            self.field.to_string().to_snake_case().to_lowercase(),
+            field_str_sc.to_lowercase(),
             self.direction.to_string()
         )
     }
@@ -47,13 +50,12 @@ pub async fn find_by(
     client: &Client,
     display_name: String,
     is_male: Option<bool>,
-    order_by_criteria: [Option<SortCriteria>; 5],
+    order_by_criteria: [Option<SaintSortCriteria>; 5],
     count: i64,
     offset: i64,
 ) -> Result<Vec<Row>, Error> {
     let order_by_string: String;
-    const order_by_criteria_length: i8 = order_by_criteria.len();
-    let order_by_strings: [String; order_by_criteria_length];
+    let order_by_strings: [String; 5] = [String; 5];
     for (i, e) in order_by_criteria.iter().enumerate() {
         if let Some(element) = e {
             order_by_strings[i] = element.to_query_string();
