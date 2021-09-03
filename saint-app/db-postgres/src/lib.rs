@@ -5,7 +5,6 @@ pub mod config;
 pub mod saint_gateway;
 pub async fn connect() -> Client {
     let config = config::Config::new();
-    println!("Connecting with config {:?}", config);
     let result = tokio_postgres::connect(
         format!(
             "user={} password={} host={} port={} dbname={}",
