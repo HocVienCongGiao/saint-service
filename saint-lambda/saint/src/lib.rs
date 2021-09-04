@@ -1,5 +1,8 @@
-use domain::boundaries::SaintMutationError;
-use hvcg_biography_openapi_saint::models::{Saint, SaintCollection};
+use domain::boundaries::{
+    SaintMutationError, SaintSortCriteriaRequest, SaintSortFieldRequest, SaintSortRequest,
+    SortDirectionRequest,
+};
+use hvcg_biography_openapi_saint::models::{Saint, SaintCollection, SaintSortCriteria};
 use jsonwebtoken::TokenData;
 use lambda_http::http::header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -8,7 +11,7 @@ use lambda_http::http::header::{
 use lambda_http::http::{method, uri::Uri, HeaderValue};
 use lambda_http::{handler, Body, Context, IntoResponse, Request, RequestExt, Response};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{json, to_string, Value};
 
 type Error = Box<dyn std::error::Error + Sync + Send + 'static>;
 
@@ -44,6 +47,7 @@ struct TokenPayload {
 pub struct SaintQuery {
     gender: Option<String>,
     display_name: Option<String>,
+    sort_criteria: Vec<String>,
     offset: Option<i64>,
     count: Option<i64>,
 }
@@ -53,6 +57,12 @@ pub fn get_query_from_request(req: &Request) -> SaintQuery {
     SaintQuery {
         gender: query.get("gender").map(|str| str.to_string()),
         display_name: query.get("displayName").map(|str| str.to_string()),
+        sort_criteria: query
+            .get_all("sorts")
+            .unwrap_or_default()
+            .iter()
+            .map(|criterion| criterion.to_string())
+            .collect(),
         offset: query.get("offset").map(|str| str.parse().unwrap()),
         count: query.get("count").map(|str| str.parse().unwrap()),
     }
@@ -111,17 +121,8 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         username = String::from("anonymous");
     }
     println!("token username {}", username);
-    // creating an application/json response
-    // Ok(json!({
-    // "message": "Test 2 is me, how are you?"
-    // }))
     println!("auth_header is {}", auth_header_str);
     println!("req.headers() is {:?}", req.headers());
-    let value = json!(
-        {
-            "message": "Test 2 20210616 is me, how are you?"
-        }
-    );
 
     let saint_response: Option<controller::openapi::saint::Saint>;
     let saint_collection: Option<SaintCollection>;
@@ -141,10 +142,72 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                 let query = get_query_from_request(&req);
                 let gender: Option<String> = query.gender;
                 let display_name: Option<String> = query.display_name;
+                let sort_request: Option<SaintSortRequest>;
+                let sort_criteria_dto = if query.sort_criteria.is_empty() {
+                    None
+                } else {
+                    Option::from(query.sort_criteria)
+                };
+                if let Some(sort_criteria_dto) = sort_criteria_dto {
+                    let mut sort_criteria = Vec::new();
+                    sort_criteria_dto.iter().for_each(|criterion| {
+                        let s: SaintSortCriteria = serde_json::from_str(criterion).unwrap();
+                        let sort_criteria_request = match s {
+                            SaintSortCriteria::DISPLAY_NAME_ASC => build_sort_criteria_request(
+                                SaintSortFieldRequest::DisplayName,
+                                SortDirectionRequest::ASC,
+                            ),
+                            SaintSortCriteria::DISPLAY_NAME_DESC => build_sort_criteria_request(
+                                SaintSortFieldRequest::DisplayName,
+                                SortDirectionRequest::DESC,
+                            ),
+                            SaintSortCriteria::VIETNAMESE_NAME_ASC => build_sort_criteria_request(
+                                SaintSortFieldRequest::EnglishName,
+                                SortDirectionRequest::ASC,
+                            ),
+                            SaintSortCriteria::VIETNAMESE_NAME_DESC => build_sort_criteria_request(
+                                SaintSortFieldRequest::EnglishName,
+                                SortDirectionRequest::DESC,
+                            ),
+                            SaintSortCriteria::ENGLISH_NAME_ASC => build_sort_criteria_request(
+                                SaintSortFieldRequest::EnglishName,
+                                SortDirectionRequest::ASC,
+                            ),
+                            SaintSortCriteria::ENGLISH_NAME_DESC => build_sort_criteria_request(
+                                SaintSortFieldRequest::EnglishName,
+                                SortDirectionRequest::DESC,
+                            ),
+                            SaintSortCriteria::FEAST_DAY_ASC => build_sort_criteria_request(
+                                SaintSortFieldRequest::FeastDay,
+                                SortDirectionRequest::ASC,
+                            ),
+                            SaintSortCriteria::FEAST_DAY_DESC => build_sort_criteria_request(
+                                SaintSortFieldRequest::FeastDay,
+                                SortDirectionRequest::DESC,
+                            ),
+                        };
+
+                        let sort_field = sort_criteria_request.field.clone();
+                        let sort_direction = sort_criteria_request.direction.clone();
+                        if SaintSortFieldRequest::FeastDay == sort_field {
+                            sort_criteria.push(build_sort_criteria_request(
+                                SaintSortFieldRequest::FeastMonth,
+                                sort_direction,
+                            ))
+                        }
+                        sort_criteria.push(sort_criteria_request);
+                    });
+
+                    sort_request = Option::from(SaintSortRequest { sort_criteria });
+                } else {
+                    sort_request = None;
+                }
+
                 let offset: Option<i64> = query.offset;
                 let count: Option<i64> = query.count;
-                saint_collection =
-                    Some(controller::get_saints(gender, display_name, offset, count).await);
+                saint_collection = Some(
+                    controller::get_saints(gender, display_name, sort_request, offset, count).await,
+                );
                 is_get_saints = true;
                 saint_response = None;
                 status_code = 200;
@@ -257,4 +320,11 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
         serde_json::to_string(&saint_response)
     );
     Ok(response)
+}
+
+fn build_sort_criteria_request(
+    field: SaintSortFieldRequest,
+    direction: SortDirectionRequest,
+) -> SaintSortCriteriaRequest {
+    SaintSortCriteriaRequest { field, direction }
 }

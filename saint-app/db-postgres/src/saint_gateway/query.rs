@@ -35,7 +35,7 @@ impl SaintSortCriteria {
     }
 }
 
-pub async fn find_one_by_id(client: &Client, id: Uuid) -> Result<Row, Error> {
+pub(crate) async fn find_one_by_id(client: &Client, id: Uuid) -> Result<Row, Error> {
     let stmt = (*client)
         .prepare("SELECT * FROM saint__saint_view WHERE id = $1")
         .await
@@ -46,7 +46,7 @@ pub async fn find_one_by_id(client: &Client, id: Uuid) -> Result<Row, Error> {
     client.query_one(&stmt, name_param).await
 }
 
-pub async fn find_by(
+pub(crate) async fn find_by(
     client: &Client,
     display_name: String,
     is_male: Option<bool>,
@@ -55,10 +55,10 @@ pub async fn find_by(
     offset: i64,
 ) -> Result<Vec<Row>, Error> {
     let order_by_string: String;
-    let order_by_strings: [String; 5] = [String; 5];
+    let mut order_by_strings: Vec<String> = Vec::new();
     for (i, e) in order_by_criteria.iter().enumerate() {
         if let Some(element) = e {
-            order_by_strings[i] = element.to_query_string();
+            order_by_strings.push(element.to_query_string());
         }
     }
     order_by_string = order_by_strings.join(", ");

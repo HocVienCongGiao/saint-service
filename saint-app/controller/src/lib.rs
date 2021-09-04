@@ -2,7 +2,7 @@ use crate::openapi::saint::{SaintQueryResponse, ToOpenApi};
 use db_postgres::saint_gateway::SaintRepository;
 use domain::boundaries::{
     SaintDbGateway, SaintMutationError, SaintMutationInputBoundary, SaintMutationRequest,
-    SaintQueryInputBoundary, SaintQueryRequest,
+    SaintQueryInputBoundary, SaintQueryRequest, SaintSortRequest,
 };
 pub use hvcg_biography_openapi_saint::models::{Saint, SaintCollection};
 use uuid::Uuid;
@@ -19,6 +19,7 @@ pub async fn get_saint(id: Uuid) -> Option<openapi::saint::Saint> {
             id: Some(id),
             gender: None,
             display_name: None,
+            sort_request: None,
             offset: None,
             count: None,
         })
@@ -98,6 +99,7 @@ pub async fn delete_saint(id: Uuid) -> Result<(), SaintMutationError> {
 pub async fn get_saints(
     gender: Option<String>,
     display_name: Option<String>,
+    sort_request: Option<SaintSortRequest>,
     offset: Option<i64>,
     count: Option<i64>,
 ) -> SaintCollection {
@@ -108,10 +110,11 @@ pub async fn get_saints(
     let response = domain::interactors::saint_query::SaintQueryInteractor::new(saint_repository)
         .get_saints(SaintQueryRequest {
             id: None,
-            gender: gender,
-            display_name: display_name,
-            offset: offset,
-            count: count,
+            gender,
+            display_name,
+            sort_request,
+            offset,
+            count,
         })
         .await;
     response.to_openapi()

@@ -341,18 +341,21 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         let count = count.unwrap_or(20);
 
         let sort_criteria: [Option<SaintSortCriteria>; 5];
-        if let Some(sort_db_request) = sort_db_request {}
 
-        let default_sort_criteria: [Option<SaintSortCriteria>; 5] = [
-            Option::from(SaintSortCriteria {
-                field: SaintSortField::DisplayName,
-                direction: SortDirection::ASC,
-            }),
-            None,
-            None,
-            None,
-            None,
-        ];
+        if let Some(sort_db_request) = sort_db_request {
+            sort_criteria = to_saint_sort_criteria(sort_db_request)
+        } else {
+            sort_criteria = [
+                Option::from(SaintSortCriteria {
+                    field: SaintSortField::DisplayName,
+                    direction: SortDirection::ASC,
+                }),
+                None,
+                None,
+                None,
+                None,
+            ];
+        }
 
         let result = query::find_by(
             &(*self).client,
@@ -393,13 +396,15 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
 }
 
 fn to_saint_sort_criteria(sort_db_request: SaintSortDbRequest) -> [Option<SaintSortCriteria>; 5] {
-    let sort_criteria: Vec<SaintSortCriteria> = sort_db_request
+    let mut sort_criteria: [Option<SaintSortCriteria>; 5] = [None, None, None, None, None];
+    sort_db_request
         .sort_criteria
         .iter()
-        .map(|criterion| {
-            let field = criterion.field;
-            let direction = criterion.direction;
-            SaintSortCriteria {
+        .enumerate()
+        .for_each(|(index, criterion)| {
+            let field = &criterion.field;
+            let direction = &criterion.direction;
+            sort_criteria[index] = Option::from(SaintSortCriteria {
                 field: match field {
                     SaintSortFieldDbRequest::DisplayName => SaintSortField::DisplayName,
                     SaintSortFieldDbRequest::EnglishName => SaintSortField::EnglishName,
@@ -411,9 +416,9 @@ fn to_saint_sort_criteria(sort_db_request: SaintSortDbRequest) -> [Option<SaintS
                     SortDirectionDbRequest::ASC => SortDirection::ASC,
                     SortDirectionDbRequest::DESC => SortDirection::DESC,
                 },
-            }
-        })
-        .collect();
+            });
+        });
+    sort_criteria
 }
 
 fn convert_to_saint_db_response(row: Row) -> SaintDbResponse {

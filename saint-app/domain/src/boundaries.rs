@@ -47,11 +47,13 @@ pub struct SaintSortRequest {
     pub sort_criteria: Vec<SaintSortCriteriaRequest>,
 }
 
+#[derive(PartialEq, Clone)]
 pub struct SaintSortCriteriaRequest {
     pub field: SaintSortFieldRequest,
     pub direction: SortDirectionRequest,
 }
 
+#[derive(PartialEq, Clone)]
 pub enum SaintSortFieldRequest {
     DisplayName,
     VietnameseName,
@@ -60,6 +62,7 @@ pub enum SaintSortFieldRequest {
     FeastMonth,
 }
 
+#[derive(PartialEq, Clone)]
 pub enum SortDirectionRequest {
     ASC,
     DESC,
