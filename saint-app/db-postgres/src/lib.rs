@@ -1,5 +1,4 @@
-use domain::test_func;
-use tokio_postgres::{Client, Error, NoTls};
+use tokio_postgres::{Client, NoTls};
 
 pub mod config;
 pub mod saint_gateway;

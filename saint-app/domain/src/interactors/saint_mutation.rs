@@ -1,7 +1,7 @@
 use crate::boundaries;
 use crate::boundaries::{
-    DbError, SaintDbGateway, SaintDbRequest, SaintDbResponse, SaintMutationError,
-    SaintMutationRequest, SaintMutationResponse,
+    DbError, SaintDbGateway, SaintDbRequest, SaintMutationError, SaintMutationRequest,
+    SaintMutationResponse,
 };
 use async_trait::async_trait;
 use tokio::time::{sleep, Duration};

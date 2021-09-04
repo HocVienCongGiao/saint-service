@@ -3,17 +3,8 @@ use lambda_http::http::header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
     CONTENT_TYPE,
 };
-use lambda_http::http::HeaderValue;
-use lambda_http::{
-    handler, http, lambda_runtime, Body, Context, IntoResponse, Request, RequestExt, Response,
-};
-use saint::saint;
-use serde_json::json;
+use lambda_http::{http, Body, Context, IntoResponse, RequestExt, Response};
 use std::collections::HashMap;
-
-type Error = Box<dyn std::error::Error + Sync + Send + 'static>;
-
-// use pg_embed::postgres::PgEmbed;
 use std::path::PathBuf;
 use std::sync::Once;
 

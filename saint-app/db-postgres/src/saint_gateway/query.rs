@@ -66,7 +66,7 @@ pub(crate) async fn find_by(
     let statement = format!(
         "SELECT * FROM saint__saint_view \
         WHERE unaccent(display_name) LIKE ('%' || unaccent($1) || '%') AND ($2::BOOL is null or is_male = $2::BOOL) \
-        ORDER BY {:?} \
+        ORDER BY {} \
         LIMIT $3 OFFSET $4", 
         order_by_string
     );
