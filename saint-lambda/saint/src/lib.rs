@@ -152,7 +152,7 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                 if let Some(sort_criteria_dto) = sort_criteria_dto {
                     let mut sort_criteria = Vec::new();
                     sort_criteria_dto.iter().for_each(|criterion| {
-                        let s: SaintSortCriteria = serde_json::from_str(criterion).unwrap();
+                        let s: SaintSortCriteria = criterion.parse().unwrap();
                         let sort_criteria_request = match s {
                             SaintSortCriteria::DISPLAY_NAME_ASC => build_sort_criteria_request(
                                 SaintSortFieldRequest::DisplayName,

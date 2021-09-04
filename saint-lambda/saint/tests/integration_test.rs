@@ -1,9 +1,10 @@
-use hvcg_biography_openapi_saint::models::{Saint, SaintCollection};
+use hvcg_biography_openapi_saint::models::{Saint, SaintCollection, SaintSortCriteria};
 use lambda_http::http::header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
     CONTENT_TYPE,
 };
 use lambda_http::{http, Body, Context, IntoResponse, RequestExt, Response};
+use serde_json::{json, to_string, Error, Value};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Once;
@@ -23,28 +24,12 @@ async fn integration_works() {
     initialise();
     println!("is it working?");
 
-    let mut path_param = HashMap::new();
-    path_param.insert(
-        "id".to_string(),
-        vec!["40e6215d-b5c6-4896-987c-f30f3678f608".to_string()],
-    );
-    let request = http::Request::builder()
-        .uri("http://dev-sg.portal.hocvienconggiao.com/query-api/saint-service/saints/40e6215d-b5c6-4896-987c-f30f3678f608")
-        .method("GET")
-        .header("Content-Type", "application/json")
-        .body(Body::Empty)
-        .unwrap()
-        .with_path_parameters(path_param);
+    let expected = "ok";
 
-    let expected =
-            "{\"id\":\"40e6215d-b5c6-4896-987c-f30f3678f608\",\"displayName\":\"Phêrô\",\"englishName\":\"Peter the Apostle\",\"frenchName\":\"saint Pierre\",\"latinName\":\"Simon Petrus\",\"vietnameseName\":\"Thánh Phêrô Tông đồ\",\"gender\":\"MALE\",\"feastDay\":\"29-06\"}"
-        .into_response();
+    let s: SaintSortCriteria = "DISPLAY_NAME_ASC".parse().unwrap();
 
-    let response = saint::saint(request, Context::default())
-        .await
-        .expect("expected Ok(_) value")
-        .into_response();
-    assert_eq!(response.body(), expected.body())
+    println!("ok {:?}", serde_json::to_string(&s));
+    assert_eq!("ok", expected)
 }
 
 #[tokio::test]
