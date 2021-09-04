@@ -1,12 +1,17 @@
 use async_trait::async_trait;
-use domain::boundaries::DbError;
 use tokio_postgres::{Client, Error, Row};
 use uuid::Uuid;
 
 mod mutation;
 mod query;
 
-use domain::boundaries::{SaintCollectionDbResponse, SaintDbRequest, SaintDbResponse};
+use crate::saint_gateway::query::{SaintSortCriteria, SaintSortField, SortDirection};
+use domain::boundaries::{
+    DbError, SaintCollectionDbResponse, SaintDbRequest, SaintDbResponse,
+    SaintSortCriteriaDbRequest, SaintSortDbRequest, SaintSortFieldDbRequest,
+    SortDirectionDbRequest,
+};
+use std::any::Any;
 
 pub struct SaintRepository {
     pub client: Client,
@@ -14,7 +19,7 @@ pub struct SaintRepository {
 
 #[async_trait]
 impl domain::boundaries::SaintDbGateway for SaintRepository {
-    async fn find_by_id(&self, id: Uuid) -> Option<SaintDbResponse> {
+    async fn get_saint_by_id(&self, id: Uuid) -> Option<SaintDbResponse> {
         let result = query::find_one_by_id(&(*self).client, id.clone()).await;
         println!("second block_on for row");
         if result.is_err() {
@@ -325,19 +330,38 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         &self,
         is_male: Option<bool>,
         display_name: Option<String>,
+        sort_db_request: Option<SaintSortDbRequest>,
         offset: Option<i64>,
         count: Option<i64>,
     ) -> SaintCollectionDbResponse {
         let display_name = display_name
-            .map(|value| format!("%{}%", value))
-            .unwrap_or("%".to_string());
+            // .map(|value| format!("{}", value))
+            .unwrap_or("".to_string());
         let offset = offset.unwrap_or(0);
         let count = count.unwrap_or(20);
 
-        let result = query::get_collection(
+        let sort_criteria: [Option<SaintSortCriteria>; 5];
+
+        if let Some(sort_db_request) = sort_db_request {
+            sort_criteria = to_saint_sort_criteria(sort_db_request)
+        } else {
+            sort_criteria = [
+                Option::from(SaintSortCriteria {
+                    field: SaintSortField::DisplayName,
+                    direction: SortDirection::ASC,
+                }),
+                None,
+                None,
+                None,
+                None,
+            ];
+        }
+
+        let result = query::find_by(
             &(*self).client,
             display_name.clone(),
             is_male,
+            sort_criteria,
             count,
             offset,
         )
@@ -377,6 +401,32 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
             total,
         }
     }
+}
+
+fn to_saint_sort_criteria(sort_db_request: SaintSortDbRequest) -> [Option<SaintSortCriteria>; 5] {
+    let mut sort_criteria: [Option<SaintSortCriteria>; 5] = [None, None, None, None, None];
+    sort_db_request
+        .sort_criteria
+        .iter()
+        .enumerate()
+        .for_each(|(index, criterion)| {
+            let field = &criterion.field;
+            let direction = &criterion.direction;
+            sort_criteria[index] = Option::from(SaintSortCriteria {
+                field: match field {
+                    SaintSortFieldDbRequest::DisplayName => SaintSortField::DisplayName,
+                    SaintSortFieldDbRequest::EnglishName => SaintSortField::EnglishName,
+                    SaintSortFieldDbRequest::VietnameseName => SaintSortField::VietnameseName,
+                    SaintSortFieldDbRequest::FeastDay => SaintSortField::FeastDay,
+                    SaintSortFieldDbRequest::FeastMonth => SaintSortField::FeastMonth,
+                },
+                direction: match direction {
+                    SortDirectionDbRequest::ASC => SortDirection::ASC,
+                    SortDirectionDbRequest::DESC => SortDirection::DESC,
+                },
+            });
+        });
+    sort_criteria
 }
 
 fn convert_to_saint_db_response(row: Row) -> SaintDbResponse {
