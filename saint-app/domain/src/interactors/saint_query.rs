@@ -37,6 +37,10 @@ where
             .gender
             .map(|value| if value.eq("MALE") { true } else { false });
         let display_name = request.display_name;
+        let vietnamese_name = request.vietnamese_name;
+        let english_name = request.english_name;
+        let feast_day = request.feast_day;
+        let feast_month = request.feast_month;
         let offset = request.offset;
         let count = request.count;
         let sort_request = request.sort_request;
@@ -51,6 +55,10 @@ where
         let result = ((*self).db_gateway.get_saint_collection(
             is_male,
             display_name,
+            vietnamese_name,
+            english_name,
+            feast_day,
+            feast_month,
             sort_db_request,
             offset,
             count,

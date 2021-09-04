@@ -4,7 +4,6 @@ use lambda_http::http::header::{
     CONTENT_TYPE,
 };
 use lambda_http::{http, Body, Context, IntoResponse, RequestExt, Response};
-use serde_json::{json, to_string, Error, Value};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Once;

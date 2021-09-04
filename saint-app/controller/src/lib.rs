@@ -1,8 +1,8 @@
-use crate::openapi::saint::{SaintQueryResponse, ToOpenApi};
+use crate::openapi::saint::ToOpenApi;
 use db_postgres::saint_gateway::SaintRepository;
 use domain::boundaries::{
-    SaintDbGateway, SaintMutationError, SaintMutationInputBoundary, SaintMutationRequest,
-    SaintQueryInputBoundary, SaintQueryRequest, SaintSortRequest,
+    SaintMutationError, SaintMutationInputBoundary, SaintMutationRequest, SaintQueryInputBoundary,
+    SaintQueryRequest, SaintSortRequest,
 };
 pub use hvcg_biography_openapi_saint::models::{Saint, SaintCollection};
 use uuid::Uuid;
@@ -19,6 +19,10 @@ pub async fn get_saint(id: Uuid) -> Option<openapi::saint::Saint> {
             id: Some(id),
             gender: None,
             display_name: None,
+            vietnamese_name: None,
+            english_name: None,
+            feast_day: None,
+            feast_month: None,
             sort_request: None,
             offset: None,
             count: None,
@@ -99,6 +103,10 @@ pub async fn delete_saint(id: Uuid) -> Result<(), SaintMutationError> {
 pub async fn get_saints(
     gender: Option<String>,
     display_name: Option<String>,
+    vietnamese_name: Option<String>,
+    english_name: Option<String>,
+    feast_day: Option<i16>,
+    feast_month: Option<i16>,
     sort_request: Option<SaintSortRequest>,
     offset: Option<i64>,
     count: Option<i64>,
@@ -112,6 +120,10 @@ pub async fn get_saints(
             id: None,
             gender,
             display_name,
+            vietnamese_name,
+            english_name,
+            feast_day,
+            feast_month,
             sort_request,
             offset,
             count,
