@@ -26,7 +26,7 @@ pub(crate) enum SortDirection {
 impl SaintSortCriteria {
     fn to_query_string(&self) -> String {
         let field_str = &*self.field.to_string();
-        let field_str_sc = "field_str".to_snake_case();
+        let field_str_sc = field_str.to_snake_case();
         format!(
             "{} {}",
             field_str_sc.to_lowercase(),
