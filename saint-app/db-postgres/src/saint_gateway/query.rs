@@ -80,7 +80,7 @@ pub(crate) async fn find_by(
         "SELECT * FROM saint__saint_view \
         WHERE {} \
         ORDER BY {} \
-        LIMIT $3 OFFSET $4",
+        LIMIT $5 OFFSET $6",
         filtering_string, order_by_string
     );
 
@@ -121,7 +121,7 @@ pub async fn count_without_limit(
         (SELECT * FROM saint__saint_view \
         WHERE {} \
         ORDER BY id \
-        LIMIT ALL OFFSET $3) AS saints",
+        LIMIT ALL OFFSET $5) AS saints",
         filtering_string
     );
 
