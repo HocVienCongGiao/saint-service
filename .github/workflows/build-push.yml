@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - update
+      - feature/filtering-vietnamese-english-feast-day
 env:
   CARGO_TERM_COLOR: always
 

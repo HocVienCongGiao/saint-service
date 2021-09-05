@@ -67,7 +67,7 @@ pub(crate) async fn find_by(
     }
     order_by_string = order_by_strings.join(", ");
 
-    let filtering_str = build_filtering_query_statement_string(
+    let filtering_string = build_filtering_query_statement_string(
         display_name.clone(),
         vietnamese_name.clone(),
         english_name.clone(),
@@ -75,12 +75,13 @@ pub(crate) async fn find_by(
         feast_day,
         feast_month,
     );
+
     let statement = format!(
         "SELECT * FROM saint__saint_view \
         WHERE {} \
         ORDER BY {} \
         LIMIT $3 OFFSET $4",
-        filtering_str, order_by_string
+        filtering_string, order_by_string
     );
 
     println!("statement = {}", statement);
@@ -99,14 +100,22 @@ pub async fn count_without_limit(
     feast_month: Option<i16>,
     offset: i64,
 ) -> Result<i64, Error> {
+    let filtering_string = build_filtering_query_statement_string(
+        display_name.clone(),
+        vietnamese_name.clone(),
+        english_name.clone(),
+        is_male,
+        feast_day,
+        feast_month,
+    );
+
     let statement = format!(
         "SELECT COUNT(*) FROM
         (SELECT * FROM saint__saint_view \
-        WHERE \
-        unaccent(display_name) LIKE ('%' || unaccent($1) || '%') \
-        AND ($2::BOOL is null or is_male = $2::BOOL) \
+        WHERE {} \
         ORDER BY id \
         LIMIT ALL OFFSET $3) AS saints",
+        filtering_string
     );
 
     println!("statement = {}", statement);
