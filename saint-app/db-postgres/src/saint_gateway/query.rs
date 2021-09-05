@@ -164,6 +164,8 @@ fn build_filtering_query_statement_string(
 ) -> String {
     "unaccent(display_name) LIKE ('%' || unaccent($1) || '%') \
         AND ($2::BOOL is null or is_male = $2::BOOL) \
+        AND unaccent(vietnamese_name) LIKE ('%' || unaccent($3) || '%') \
+        AND unaccent(english_name) LIKE ('%' || unaccent($4) || '%') \
         "
     .to_string()
 }
