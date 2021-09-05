@@ -8,10 +8,9 @@ use lambda_http::http::header::{
     ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
     CONTENT_TYPE,
 };
-use lambda_http::http::{method, uri::Uri, HeaderValue};
-use lambda_http::{handler, Body, Context, IntoResponse, Request, RequestExt, Response};
+use lambda_http::http::{method, HeaderValue};
+use lambda_http::{Body, Context, IntoResponse, Request, RequestExt, Response};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, to_string, Value};
 
 type Error = Box<dyn std::error::Error + Sync + Send + 'static>;
 
@@ -47,6 +46,9 @@ struct TokenPayload {
 pub struct SaintQuery {
     gender: Option<String>,
     display_name: Option<String>,
+    vietnamese_name: Option<String>,
+    english_name: Option<String>,
+    feast_day: Option<String>, // TODO Implement filtering
     sort_criteria: Vec<String>,
     offset: Option<i64>,
     count: Option<i64>,
@@ -57,6 +59,9 @@ pub fn get_query_from_request(req: &Request) -> SaintQuery {
     SaintQuery {
         gender: query.get("gender").map(|str| str.to_string()),
         display_name: query.get("displayName").map(|str| str.to_string()),
+        vietnamese_name: query.get("vietnameseName").map(|str| str.to_string()),
+        english_name: query.get("englishName").map(|str| str.to_string()),
+        feast_day: query.get("feastDay").map(|str| str.to_string()),
         sort_criteria: query
             .get_all("sorts")
             .unwrap_or_default()
@@ -143,12 +148,20 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                 let query = get_query_from_request(&req);
                 let gender: Option<String> = query.gender;
                 let display_name: Option<String> = query.display_name;
+                let vietnamese_name = query.vietnamese_name;
+                let english_name = query.english_name;
+
+                // TODO handle searching
+                let feast_day: Option<i16> = None;
+                let feast_month: Option<i16> = None;
+
                 let sort_request: Option<SaintSortRequest>;
                 let sort_criteria_dto = if query.sort_criteria.is_empty() {
                     None
                 } else {
                     Option::from(query.sort_criteria)
                 };
+
                 if let Some(sort_criteria_dto) = sort_criteria_dto {
                     let mut sort_criteria = Vec::new();
                     sort_criteria_dto.iter().for_each(|criterion| {
@@ -207,7 +220,18 @@ pub async fn saint(req: Request, ctx: Context) -> Result<impl IntoResponse, Erro
                 let offset: Option<i64> = query.offset;
                 let count: Option<i64> = query.count;
                 saint_collection = Some(
-                    controller::get_saints(gender, display_name, sort_request, offset, count).await,
+                    controller::get_saints(
+                        gender,
+                        display_name,
+                        vietnamese_name,
+                        english_name,
+                        feast_day,
+                        feast_month,
+                        sort_request,
+                        offset,
+                        count,
+                    )
+                    .await,
                 );
                 is_get_saints = true;
                 saint_response = None;

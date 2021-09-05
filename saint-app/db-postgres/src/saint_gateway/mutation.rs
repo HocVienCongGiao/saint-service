@@ -1,5 +1,5 @@
 use tokio_postgres::types::ToSql;
-use tokio_postgres::{Client, Error, Row, Transaction};
+use tokio_postgres::{Error, Transaction};
 use uuid::Uuid;
 
 pub(crate) async fn save_id(transaction: &Transaction<'_>, id: Uuid) -> Result<u64, Error> {

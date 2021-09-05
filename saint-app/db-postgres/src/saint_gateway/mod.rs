@@ -7,11 +7,9 @@ mod query;
 
 use crate::saint_gateway::query::{SaintSortCriteria, SaintSortField, SortDirection};
 use domain::boundaries::{
-    DbError, SaintCollectionDbResponse, SaintDbRequest, SaintDbResponse,
-    SaintSortCriteriaDbRequest, SaintSortDbRequest, SaintSortFieldDbRequest,
-    SortDirectionDbRequest,
+    DbError, SaintCollectionDbResponse, SaintDbRequest, SaintDbResponse, SaintSortDbRequest,
+    SaintSortFieldDbRequest, SortDirectionDbRequest,
 };
-use std::any::Any;
 
 pub struct SaintRepository {
     pub client: Client,
@@ -330,13 +328,18 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         &self,
         is_male: Option<bool>,
         display_name: Option<String>,
+        vietnamese_name: Option<String>,
+        english_name: Option<String>,
+        feast_day: Option<i16>,
+        feast_month: Option<i16>,
         sort_db_request: Option<SaintSortDbRequest>,
         offset: Option<i64>,
         count: Option<i64>,
     ) -> SaintCollectionDbResponse {
-        let display_name = display_name
-            // .map(|value| format!("{}", value))
-            .unwrap_or("".to_string());
+        let display_name = display_name.unwrap_or("".to_string());
+        let vietnamese_name = vietnamese_name.unwrap_or("".to_string());
+        let english_name = english_name.unwrap_or("".to_string());
+
         let offset = offset.unwrap_or(0);
         let count = count.unwrap_or(20);
 
@@ -360,7 +363,11 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         let result = query::find_by(
             &(*self).client,
             display_name.clone(),
+            vietnamese_name.clone(),
+            english_name.clone(),
             is_male,
+            feast_day,
+            feast_month,
             sort_criteria,
             count,
             offset,
@@ -382,7 +389,11 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         let total_from_offset = query::count_without_limit(
             &(*self).client,
             display_name.clone(),
-            is_male.clone(),
+            vietnamese_name.clone(),
+            english_name.clone(),
+            is_male,
+            feast_day,
+            feast_month,
             offset,
         )
         .await
@@ -392,9 +403,17 @@ impl domain::boundaries::SaintDbGateway for SaintRepository {
         } else {
             has_more = Some(false);
         }
-        let total = query::count_total(&(*self).client, display_name, is_male)
-            .await
-            .unwrap();
+        let total = query::count_total(
+            &(*self).client,
+            display_name,
+            vietnamese_name,
+            english_name,
+            is_male,
+            feast_day,
+            feast_month,
+        )
+        .await
+        .unwrap();
         SaintCollectionDbResponse {
             collection,
             has_more,
