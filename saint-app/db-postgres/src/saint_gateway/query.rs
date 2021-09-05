@@ -86,7 +86,14 @@ pub(crate) async fn find_by(
 
     println!("statement = {}", statement);
     let stmt = (*client).prepare(&statement).await.unwrap();
-    let name_param: &[&(dyn ToSql + Sync)] = &[&display_name, &is_male, &count, &offset];
+    let name_param: &[&(dyn ToSql + Sync)] = &[
+        &display_name,
+        &is_male,
+        &vietnamese_name,
+        &english_name,
+        &count,
+        &offset,
+    ];
     client.query(&stmt, name_param).await
 }
 
@@ -120,7 +127,13 @@ pub async fn count_without_limit(
 
     println!("statement = {}", statement);
     let stmt = (*client).prepare(&statement).await.unwrap();
-    let name_param: &[&(dyn ToSql + Sync)] = &[&display_name, &is_male, &offset];
+    let name_param: &[&(dyn ToSql + Sync)] = &[
+        &display_name,
+        &is_male,
+        &vietnamese_name,
+        &english_name,
+        &offset,
+    ];
     Ok(client.query_one(&stmt, name_param).await?.get("count"))
 }
 
@@ -150,7 +163,8 @@ pub async fn count_total(
 
     println!("statement = {}", statement);
     let stmt = (*client).prepare(&statement).await.unwrap();
-    let name_param: &[&(dyn ToSql + Sync)] = &[&display_name, &is_male];
+    let name_param: &[&(dyn ToSql + Sync)] =
+        &[&display_name, &is_male, &vietnamese_name, &english_name];
     Ok(client.query_one(&stmt, name_param).await?.get("count"))
 }
 
